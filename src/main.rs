@@ -1,5 +1,6 @@
 use nalgebra::{Vector3, Rotation3, Rotation};
 use pancurses::{initscr, endwin, noecho, Input};
+use krpc_mars;
 
 fn main() {
     let main_window = initscr();

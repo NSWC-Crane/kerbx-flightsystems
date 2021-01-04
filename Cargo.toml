@@ -14,4 +14,4 @@ krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
 
 [build-dependencies]
 glob = "*"
-krpc_mars_terraformer = { git = "https://github.com/drwhomphd/krpc-mars-terraformer.git" }
+krpc_mars_terraformer = { git = "https://github.com/drwhomphd/krpc-mars-terraformer.git", branch = "main" }
