@@ -1,5 +1,4 @@
 use nalgebra::{Vector3, Rotation3, Rotation};
-use krpc::{rpc};
 use pancurses::{initscr, endwin, noecho, Input};
 
 fn main() {
