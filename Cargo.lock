@@ -227,7 +227,7 @@ dependencies = [
 [[package]]
 name = "krpc_mars_terraformer"
 version = "0.7.1"
-source = "git+https://github.com/drwhomphd/krpc-mars-terraformer.git?branch=main#313c91c41d1fc825635fce69708dbc4ce80c340c"
+source = "git+https://github.com/drwhomphd/krpc-mars-terraformer.git?branch=main#573e04c4628de925c259a41bf26dcd07bff35e28"
 dependencies = [
  "heck",
  "serde_json",
