@@ -1,11 +1,33 @@
 use nalgebra::{Vector3};
 use pancurses::{initscr, newwin, endwin, noecho, curs_set, doupdate, Input};
 use krpc_mars::{RPCClient};
+use clap::{Arg,App};
+
 use std::{error::Error, thread, time};
 
 use ksp_firecontrol::{space_center};
 
 fn main() -> Result<(), Box<dyn Error>> {
+
+    // Parse command line arguments.
+    let matches = App::new("KSP Fire Control")
+    .version(env!("CARGO_PKG_VERSION"))
+    .author(env!("CARGO_PKG_AUTHORS"))
+    .about("Kerbal Space Program Mission Computer")
+    .arg(
+        Arg::with_name("ip")
+        .short("i")
+        .takes_value(true)
+        .required(true)
+        .help("IP Address of the KRPC Server")
+    ).arg(
+        Arg::with_name("port")
+        .short("p")
+        .takes_value(true)
+        .default_value("50000")
+        .help("Port of the KRPC Server")
+    ).get_matches();
+
     let main_window = initscr();
     noecho();
     curs_set(0);
@@ -17,7 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Display our initial layout
     main_window.draw_box('|', '-');
-    main_window.printw("Kerbel File Control");
+    main_window.printw("Kerbal Fire Control");
     main_window.mvaddstr(lines - 1, 0, "Press 'q' to quit");
     main_window.timeout(0);
     main_window.noutrefresh();
@@ -30,7 +52,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     doupdate();
 
     // Connect to KSP via krpc-rs
-    let client = krpc_mars::RPCClient::connect("Fire Control", "172.28.64.1:50000").expect("Could not connect to KRPC Server.");
+    let server_address = format!("{}:{}", matches.value_of("ip").unwrap(), matches.value_of("port").unwrap());
+    let client = RPCClient::connect("Fire Control", server_address).expect("Could not connect to KRPC Server.");
 
     // Main loop for handling information from ksp
     loop {
