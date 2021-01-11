@@ -1,4 +1,4 @@
-use nalgebra::{Vector3, Rotation3, Rotation};
+use nalgebra::{Vector3};
 use pancurses::{initscr, newwin, endwin, noecho, curs_set, doupdate, Input};
 use krpc_mars::{RPCClient};
 use std::{error::Error, thread, time};
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     doupdate();
 
     // Connect to KSP via krpc-rs
-    let client = krpc_mars::RPCClient::connect("Fire Control", "172.23.144.1:50000").expect("Could not connect to KRPC Server.");
+    let client = krpc_mars::RPCClient::connect("Fire Control", "172.28.64.1:50000").expect("Could not connect to KRPC Server.");
 
     // Main loop for handling information from ksp
     loop {
@@ -59,21 +59,21 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Calculate pitch
         let pitch = if direction[0] < 0.0 {
-            -nalgebra::angle_between(&horizon, &direction)
+            -horizon.angle(&direction)
         } else {
-            nalgebra::angle_between(&horizon, &direction)
+            horizon.angle(&direction)
         };
         
         // Calculate heading
         let heading = if horizon[2] < 0.0 {
-            360.0 - nalgebra::angle_between(&horizon, &north)
+            360.0 - horizon.angle(&north)
         } else {
-            nalgebra::angle_between(&horizon, &north)
+            horizon.angle(&north)
         };
 
         let vessel_up = Vector3::new(vessel_up.0, vessel_up.1, vessel_up.2);
-        let plane_normal = nalgebra::cross(&direction, &up);
-        let roll = nalgebra::angle_between(&vessel_up, &plane_normal);
+        let plane_normal = direction.cross(&up);
+        let roll = vessel_up.angle(&plane_normal);
         let roll = if up[0] > 0.0 {
             roll * -1.0
         } else {
