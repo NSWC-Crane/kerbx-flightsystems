@@ -59,22 +59,22 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Calculate pitch
         let pitch = if direction[0] < 0.0 {
-            -horizon.angle(&direction)
+            -to_degrees(horizon.angle(&direction))
         } else {
-            horizon.angle(&direction)
+            to_degrees(horizon.angle(&direction))
         };
         
         // Calculate heading
         let heading = if horizon[2] < 0.0 {
-            360.0 - horizon.angle(&north)
+            360.0 - to_degrees(horizon.angle(&north))
         } else {
-            horizon.angle(&north)
+            to_degrees(horizon.angle(&north))
         };
 
         let vessel_up = Vector3::new(vessel_up.0, vessel_up.1, vessel_up.2);
         let plane_normal = direction.cross(&up);
-        let roll = vessel_up.angle(&plane_normal);
-        let roll = if up[0] > 0.0 {
+        let roll = to_degrees(vessel_up.angle(&plane_normal));
+        let roll = if vessel_up[0] > 0.0 {
             roll * -1.0
         } else {
             if roll < 0.0 {
@@ -91,13 +91,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let lon = client.mk_call(&planet.longitude_at_position(position, &orb_ref_frame))?;
         let alt = client.mk_call(&planet.altitude_at_position(position, &orb_ref_frame))?;
         
-        output_window.mvaddstr(1, 1, format!("Yaw: {:?}", heading));
+        output_window.mvaddstr(1, 1, format!("Yaw: {}", heading));
         output_window.mvaddstr(2, 1, format!("Pitch: {}", pitch));
         output_window.mvaddstr(3, 1, format!("Roll: {}", roll));
         output_window.mvaddstr(4, 1, format!("Lat: {}", lat));
         output_window.mvaddstr(5, 1, format!("Lon: {}", lon));
         output_window.mvaddstr(6, 1, format!("Alt: {}", alt));
-        output_window.mvaddstr(7, 1, format!("Direction: {:?}", direction));
 
         if let Some(Input::Character('q')) = main_window.getch() {
             break;
@@ -115,4 +114,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     endwin();
 
     Ok(())
+}
+
+fn to_degrees(val: f64) -> f64 {
+    val * (180.0 / std::f64::consts::PI)
 }
