@@ -1,7 +1,7 @@
 use nalgebra::{Vector3};
 use krpc_mars::{RPCClient};
 use clap::{Arg,App};
-use termion::{clear, cursor, terminal_size, raw::IntoRawMode, raw::RawTerminal};
+use termion::{clear, cursor, terminal_size, raw::IntoRawMode, raw::RawTerminal, async_stdin};
 
 use std::{error::Error, thread, time};
 use std::io::{Read, Write, stdout};
@@ -39,12 +39,18 @@ fn draw_window<W: Write>(term: &mut RawTerminal<W>) -> Result<(),std::io::Error>
     }
 
     // Print our title
-    write!(term, "{}{}", cursor::Goto(5,1), WIN_TITLE);
+    mvaddstr(term, 5, 1, WIN_TITLE);
 
     // Print our bottom quit message
-    write!(term, "{}{}", cursor::Goto(5,rows), QUIT_MSG);
+    mvaddstr(term, 5, rows, QUIT_MSG);
+
+    term.flush()?;
 
     Ok(())
+}
+
+fn mvaddstr<W: Write>(term: &mut RawTerminal<W>, col: u16, row: u16, text: &str) {
+    write!(term, "{}{}{}", cursor::Goto(col, row), text, cursor::Hide);
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -71,6 +77,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Enter Raw Terminal mode for the app
     let mut stdout = stdout().into_raw_mode().unwrap();
+    let mut stdin = async_stdin().bytes();
 
     // Draw our border
     draw_window(&mut stdout)?;
@@ -137,28 +144,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         let lat = client.mk_call(&planet.latitude_at_position(position, &orb_ref_frame))?;
         let lon = client.mk_call(&planet.longitude_at_position(position, &orb_ref_frame))?;
         let alt = client.mk_call(&planet.altitude_at_position(position, &orb_ref_frame))?;
-        /*
-        output_window.mvaddstr(1, 1, format!("Yaw: {}", heading));
-        output_window.mvaddstr(2, 1, format!("Pitch: {}", pitch));
-        output_window.mvaddstr(3, 1, format!("Roll: {}", roll));
-        output_window.mvaddstr(4, 1, format!("Lat: {}", lat));
-        output_window.mvaddstr(5, 1, format!("Lon: {}", lon));
-        output_window.mvaddstr(6, 1, format!("Alt: {}", alt));
 
-        if let Some(Input::Character('q')) = main_window.getch() {
+
+        // Quit on recieving q
+        let b = stdin.next();
+        if let Some(Ok(b'q')) = b {
             break;
         }
 
-        // Window refreshes from the bottom up
-        main_window.noutrefresh();
-        output_window.noutrefresh();
-        doupdate();
-*/
+        mvaddstr(&mut stdout, 3, 3, format!("Yaw: {}", heading).as_str());
+        mvaddstr(&mut stdout, 3, 4, format!("Pitch: {}", pitch).as_str());
+        mvaddstr(&mut stdout, 3, 5, format!("Roll: {}", roll).as_str());
+        mvaddstr(&mut stdout, 3, 6, format!("Lat: {}", lat).as_str());
+        mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str());
+        mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str());
+
         thread::sleep(time::Duration::from_millis(100));
     }
 
     // Cleanup after ourselves
-    // endwin();
+    write!(stdout, "{}", clear::All).unwrap();
 
     Ok(())
 }
