@@ -1,11 +1,51 @@
 use nalgebra::{Vector3};
-use pancurses::{initscr, newwin, endwin, noecho, curs_set, doupdate, Input};
 use krpc_mars::{RPCClient};
 use clap::{Arg,App};
+use termion::{clear, cursor, terminal_size, raw::IntoRawMode, raw::RawTerminal};
 
 use std::{error::Error, thread, time};
+use std::io::{Read, Write, stdout};
 
 use ksp_firecontrol::{space_center};
+
+const HORZ_BOUNDARY: &'static str = "─";
+const VERT_BOUNDARY: &'static str = "│";
+const WIN_TITLE: &'static str = "Kerbal Fire Control";
+const QUIT_MSG: &'static str = "Press 'q' to quit.";
+
+fn draw_window<W: Write>(term: &mut RawTerminal<W>) -> Result<(),std::io::Error> {
+    // Clear the window
+    write!(term, "{}", clear::All).unwrap();
+
+    // Get window size
+    let (cols, rows) = terminal_size()?;
+
+    // Print top and bottom boarders
+    for x in 1..=cols {
+        // Print top
+        write!(term, "{}{}", cursor::Goto(x,1), HORZ_BOUNDARY);
+
+        // Print bottom
+        write!(term, "{}{}", cursor::Goto(x,rows), HORZ_BOUNDARY);
+    }
+
+    // Print side boarders 
+    for y in 2..rows {
+        // Print left
+        write!(term, "{}{}", cursor::Goto(1,y), VERT_BOUNDARY);
+
+        // Print right
+        write!(term, "{}{}", cursor::Goto(cols,y), VERT_BOUNDARY);
+    }
+
+    // Print our title
+    write!(term, "{}{}", cursor::Goto(5,1), WIN_TITLE);
+
+    // Print our bottom quit message
+    write!(term, "{}{}", cursor::Goto(5,rows), QUIT_MSG);
+
+    Ok(())
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
 
@@ -28,28 +68,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         .help("Port of the KRPC Server")
     ).get_matches();
 
-    let main_window = initscr();
-    noecho();
-    curs_set(0);
-    main_window.timeout(0);
 
-    // Window constants used later for printing text    
-    let lines = main_window.get_max_y();
-    let cols = main_window.get_max_x();
+    // Enter Raw Terminal mode for the app
+    let mut stdout = stdout().into_raw_mode().unwrap();
 
-    // Display our initial layout
-    main_window.draw_box('|', '-');
-    main_window.printw("Kerbal Fire Control");
-    main_window.mvaddstr(lines - 1, 0, "Press 'q' to quit");
-    main_window.timeout(0);
-    main_window.noutrefresh();
-
-    // Create the internal window we'll refresh with our output
-    let output_window = newwin(lines - 6, cols - 4, 3, 2);
-    output_window.timeout(0);
-    output_window.noutrefresh();
-
-    doupdate();
+    // Draw our border
+    draw_window(&mut stdout)?;
 
     // Connect to KSP via krpc-rs
     let server_address = format!("{}:{}", matches.value_of("ip").unwrap(), matches.value_of("port").unwrap());
@@ -113,7 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let lat = client.mk_call(&planet.latitude_at_position(position, &orb_ref_frame))?;
         let lon = client.mk_call(&planet.longitude_at_position(position, &orb_ref_frame))?;
         let alt = client.mk_call(&planet.altitude_at_position(position, &orb_ref_frame))?;
-        
+        /*
         output_window.mvaddstr(1, 1, format!("Yaw: {}", heading));
         output_window.mvaddstr(2, 1, format!("Pitch: {}", pitch));
         output_window.mvaddstr(3, 1, format!("Roll: {}", roll));
@@ -129,12 +153,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         main_window.noutrefresh();
         output_window.noutrefresh();
         doupdate();
-
+*/
         thread::sleep(time::Duration::from_millis(100));
     }
 
     // Cleanup after ourselves
-    endwin();
+    // endwin();
 
     Ok(())
 }
