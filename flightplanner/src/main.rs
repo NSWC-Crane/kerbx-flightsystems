@@ -15,7 +15,7 @@ use ksp_firecontrol::{space_center};
 
 const HORZ_BOUNDARY: &'static str = "─";
 const VERT_BOUNDARY: &'static str = "│";
-const WIN_TITLE: &'static str = "Kerbal Fire Control";
+const WIN_TITLE: &'static str = "KerbX Flight Planner";
 const QUIT_MSG: &'static str = "Press 'q' to quit.";
 
 fn draw_window<W: Write>(term: &mut RawTerminal<W>) -> Result<(),std::io::Error> {
@@ -61,10 +61,10 @@ fn mvaddstr<W: Write>(term: &mut RawTerminal<W>, col: u16, row: u16, text: &str)
 fn main() -> Result<(), Box<dyn Error>> {
 
     // Parse command line arguments.
-    let matches = App::new("KSP Fire Control")
+    let matches = App::new("KerbX Flight Planner")
     .version(env!("CARGO_PKG_VERSION"))
     .author(env!("CARGO_PKG_AUTHORS"))
-    .about("Kerbal Space Program Mission Computer")
+    .about("KerbX Flight Planning Mission Computer")
     .arg(
         Arg::with_name("ip")
         .short("i")
@@ -89,7 +89,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Connect to KSP via krpc-rs
     let server_address = format!("{}:{}", matches.value_of("ip").unwrap(), matches.value_of("port").unwrap());
-    let client = RPCClient::connect("Fire Control", server_address).expect("Could not connect to KRPC Server.");
+    let client = RPCClient::connect("Flight Planner", server_address).expect("Could not connect to KRPC Server.");
 
     // Main loop for handling information from ksp
     loop {

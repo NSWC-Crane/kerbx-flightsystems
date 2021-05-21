@@ -1,9 +1,16 @@
+// KRPC Mars Generated Services
 pub mod space_center;
 pub mod drawing;
 pub mod infernal_robotics;
 pub mod kerbal_alarm_clock;
 pub mod remote_tech;
 pub mod ui;
+
+// Library Modules
+use nalgebra::{Vector3};
+use krpc_mars::{RPCClient};
+use ksp_firecontrol::{space_center};
+use std::{error::Error, thread, time};
 
 #[cfg(test)]
 mod tests {
@@ -14,93 +21,10 @@ mod tests {
 }
 
 /*
-use nalgebra::{Vector3};
-use krpc_mars::{RPCClient};
-use clap::{Arg,App};
-use termion::{clear, cursor, terminal_size, raw::IntoRawMode, raw::RawTerminal, async_stdin};
-
-use std::{error::Error, thread, time};
-use std::io::{Read, Write, stdout};
-
-use ksp_firecontrol::{space_center};
-
-const HORZ_BOUNDARY: &'static str = "─";
-const VERT_BOUNDARY: &'static str = "│";
-const WIN_TITLE: &'static str = "Kerbal Fire Control";
-const QUIT_MSG: &'static str = "Press 'q' to quit.";
-
-fn draw_window<W: Write>(term: &mut RawTerminal<W>) -> Result<(),std::io::Error> {
-    // Clear the window
-    write!(term, "{}", clear::All).unwrap();
-
-    // Get window size
-    let (cols, rows) = terminal_size()?;
-
-    // Print top and bottom boarders
-    for x in 1..=cols {
-        // Print top
-        write!(term, "{}{}", cursor::Goto(x,1), HORZ_BOUNDARY);
-
-        // Print bottom
-        write!(term, "{}{}", cursor::Goto(x,rows), HORZ_BOUNDARY);
-    }
-
-    // Print side boarders
-    for y in 2..rows {
-        // Print left
-        write!(term, "{}{}", cursor::Goto(1,y), VERT_BOUNDARY);
-
-        // Print right
-        write!(term, "{}{}", cursor::Goto(cols,y), VERT_BOUNDARY);
-    }
-
-    // Print our title
-    mvaddstr(term, 5, 1, WIN_TITLE);
-
-    // Print our bottom quit message
-    mvaddstr(term, 5, rows, QUIT_MSG);
-
-    term.flush()?;
-
-    Ok(())
-}
-
-fn mvaddstr<W: Write>(term: &mut RawTerminal<W>, col: u16, row: u16, text: &str) {
-    write!(term, "{}{}{}", cursor::Goto(col, row), text, cursor::Hide);
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-
-    // Parse command line arguments.
-    let matches = App::new("KSP Fire Control")
-    .version(env!("CARGO_PKG_VERSION"))
-    .author(env!("CARGO_PKG_AUTHORS"))
-    .about("Kerbal Space Program Mission Computer")
-    .arg(
-        Arg::with_name("ip")
-        .short("i")
-        .takes_value(true)
-        .required(true)
-        .help("IP Address of the KRPC Server")
-    ).arg(
-        Arg::with_name("port")
-        .short("p")
-        .takes_value(true)
-        .default_value("50000")
-        .help("Port of the KRPC Server")
-    ).get_matches();
-
-
-    // Enter Raw Terminal mode for the app
-    let mut stdout = stdout().into_raw_mode().unwrap();
-    let mut stdin = async_stdin().bytes();
-
-    // Draw our border
-    draw_window(&mut stdout)?;
 
     // Connect to KSP via krpc-rs
     let server_address = format!("{}:{}", matches.value_of("ip").unwrap(), matches.value_of("port").unwrap());
-    let client = RPCClient::connect("Fire Control", server_address).expect("Could not connect to KRPC Server.");
+    let client = RPCClient::connect("Name of Application", server_address).expect("Could not connect to KRPC Server.");
 
     // Main loop for handling information from ksp
     loop {
