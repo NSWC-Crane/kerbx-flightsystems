@@ -1,6 +1,6 @@
 // KRPC Mars Generated Services
-pub mod space_center;
 pub mod drawing;
+pub mod space_center;
 pub mod infernal_robotics;
 pub mod kerbal_alarm_clock;
 pub mod remote_tech;
@@ -8,65 +8,66 @@ pub mod ui;
 
 // Library Modules
 use nalgebra::{Vector3};
-use krpc_mars::{RPCClient};
-use std::{error::Error, thread, time};
+use krpc_mars::{RPCClient,error::Error};
+use space_center::{Vessel, CelestialBody};
+use std::{thread, time};
+use crate::space_center::ReferenceFrame;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+/// Abstraction of our KerbX Vessel within the KSP Simulator
+pub struct KerbxTransport {
+    sim_feed: RPCClient,
+    vessel_obj: Vessel,
+    vessel_ref_frame: ReferenceFrame,
+    surf_ref_frame: ReferenceFrame,
+    /// The ID of the planet the transport is orbiting
+    orbiting_obj: CelestialBody,
+    orb_ref_frame: ReferenceFrame,
+    north: Vector3<f64>,
+    up: Vector3<f64>,
 }
 
-/*
+impl KerbxTransport {
+    pub fn new(connection: RPCClient) -> Result<KerbxTransport, Error> {
+        let vessel = connection.mk_call(&space_center::get_active_vessel())?;
 
-    // Connect to KSP via krpc-rs
-    let server_address = format!("{}:{}", matches.value_of("ip").unwrap(), matches.value_of("port").unwrap());
-    let client = RPCClient::connect("Name of Application", server_address).expect("Could not connect to KRPC Server.");
+        // Given travel is terrestrial only on Kerbin, we are assuming these reference frames are
+        // constant across the life of the vehicle
+        let surf_ref_frame = connection.mk_call(&vessel.get_surface_reference_frame())?;
+        let vessel_ref_frame = connection.mk_call(&vessel.get_reference_frame())?;
+        let orb_ref_frame = connection.mk_call(&vessel.get_orbital_reference_frame())?;
 
-    // Main loop for handling information from ksp
-    loop {
+        let orbit = connection.mk_call(&vessel.get_orbit())?;
+        let planet = connection.mk_call(&orbit.get_body())?;
 
-        let vessel = client.mk_call(&space_center::get_active_vessel())?;
-
-        let surf_ref_frame = client.mk_call(&vessel.get_surface_reference_frame())?;
-        let vessel_ref_frame = client.mk_call(&vessel.get_reference_frame())?;
-
-        // Get values for calculating lat/lon
-        let orb_ref_frame = client.mk_call(&vessel.get_orbital_reference_frame())?;
-        let orbit = client.mk_call(&vessel.get_orbit())?;
-        let planet = client.mk_call(&orbit.get_body())?;
-
+        Ok(KerbxTransport {
+            sim_feed: connection,
+            vessel_obj: vessel,
+            vessel_ref_frame,
+            surf_ref_frame,
+            orbiting_obj: planet,
+            orb_ref_frame,
+            north: Vector3::new(0.0, 1.0, 0.0),
+            up: Vector3::new(1.0, 0.0, 0.0),
+        })
+    }
+    pub fn get_direction(&self) -> Result<Vector3<f64>,Error> {
         // Get current vessel direction
-        let direction = client.mk_call(&vessel.direction(&surf_ref_frame))?;
-        let direction = Vector3::new(direction.0, direction.1, direction.2);
+        let direction = self.sim_feed.mk_call(&self.vessel_obj.direction(&self.surf_ref_frame))?;
 
-        // Constants leveraged for the final calculation.
-        let horizon = Vector3::new(0.0, direction[1], direction[2]);
-        let north = Vector3::new(0.0, 1.0, 0.0);
-        let up = Vector3::new(1.0, 0.0, 0.0);
+        Ok(Vector3::new(direction.0, direction.1, direction.2))
+    }
 
-        // This line is causing Protobuf(WireError(UnecpectedEof)) errors.
-        let vessel_up = client.mk_call(&space_center::transform_direction((0.0, 0.0, -1.0), &vessel_ref_frame, &surf_ref_frame))?;
+    pub fn get_horizon(&self) -> Result<Vector3<f64>,Error> {
+        let direction = self.get_direction()?;
+        Ok(Vector3::new(0.0, direction[1], direction[2]))
+    }
 
-        // Calculate pitch
-        let pitch = if direction[0] < 0.0 {
-            -to_degrees(horizon.angle(&direction))
-        } else {
-            to_degrees(horizon.angle(&direction))
-        };
-
-        // Calculate heading
-        let heading = if horizon[2] < 0.0 {
-            360.0 - to_degrees(horizon.angle(&north))
-        } else {
-            to_degrees(horizon.angle(&north))
-        };
-
+    pub fn get_roll(&self) -> Result<f64, Error> {
+        let vessel_up = self.sim_feed.mk_call(&space_center::transform_direction((0.0, 0.0, -1.0), &self.vessel_ref_frame, &self.surf_ref_frame))?;
         let vessel_up = Vector3::new(vessel_up.0, vessel_up.1, vessel_up.2);
-        let plane_normal = direction.cross(&up);
-        let roll = to_degrees(vessel_up.angle(&plane_normal));
+
+        let plane_normal = self.get_direction()?.cross(&self.up);
+        let roll = self.to_degrees(vessel_up.angle(&plane_normal));
         let roll = if vessel_up[0] > 0.0 {
             roll * -1.0
         } else {
@@ -76,38 +77,53 @@ mod tests {
                 roll - 180.0
             }
         };
+        Ok(roll)
+    }
+    pub fn get_pitch(&self) -> Result<f64, Error> {
+        // Calculate pitch
+        let direction = self.get_direction()?;
+        let pitch = if direction[0] < 0.0 {
+            -self.to_degrees(self.get_horizon()?.angle(&direction))
+        } else {
+            self.to_degrees(self.get_horizon()?.angle(&direction))
+        };
+        Ok(pitch)
+    }
+    pub fn get_heading(&self) -> Result<f64, Error> {
+        let horizon = self.get_horizon()?;
+        let heading = if horizon[2] < 0.0 {
+            360.0 - self.to_degrees(horizon.angle(&self.north))
+        } else {
+            self.to_degrees(horizon.angle(&self.north))
+        };
+        Ok(heading)
+    }
+    pub fn get_lat(&self) -> Result<f64, Error>  {
+        let position = self.sim_feed.mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
+        let lat = self.sim_feed.mk_call(&self.orbiting_obj.latitude_at_position(position, &self.orb_ref_frame))?;
+        Ok(lat)
+    }
+    pub fn get_lon(&self) -> Result<f64, Error> {
+        let position = self.sim_feed.mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
+        let lon = self.sim_feed.mk_call(&self.orbiting_obj.longitude_at_position(position, &self.orb_ref_frame))?;
+        Ok(lon)
 
-
-        // Get current vessel position
-        let position = client.mk_call(&vessel.position(&orb_ref_frame))?;
-        let lat = client.mk_call(&planet.latitude_at_position(position, &orb_ref_frame))?;
-        let lon = client.mk_call(&planet.longitude_at_position(position, &orb_ref_frame))?;
-        let alt = client.mk_call(&planet.altitude_at_position(position, &orb_ref_frame))?;
-
-
-        // Quit on recieving q
-        let b = stdin.next();
-        if let Some(Ok(b'q')) = b {
-            break;
-        }
-
-        mvaddstr(&mut stdout, 3, 3, format!("Yaw: {}", heading).as_str());
-        mvaddstr(&mut stdout, 3, 4, format!("Pitch: {}", pitch).as_str());
-        mvaddstr(&mut stdout, 3, 5, format!("Roll: {}", roll).as_str());
-        mvaddstr(&mut stdout, 3, 6, format!("Lat: {}", lat).as_str());
-        mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str());
-        mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str());
-
-        thread::sleep(time::Duration::from_millis(100));
+    }
+    pub fn get_alt(&self) -> Result<f64, Error>  {
+        let position = self.sim_feed.mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
+        let alt = self.sim_feed.mk_call(&self.orbiting_obj.altitude_at_position(position, &self.orb_ref_frame))?;
+        Ok(alt)
     }
 
-    // Cleanup after ourselves
-    write!(stdout, "{}", clear::All).unwrap();
-
-    Ok(())
+    fn to_degrees(&self, val: f64) -> f64 {
+        val * (180.0 / std::f64::consts::PI)
+    }
 }
 
-fn to_degrees(val: f64) -> f64 {
-    val * (180.0 / std::f64::consts::PI)
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
 }
- */
