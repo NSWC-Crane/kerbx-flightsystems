@@ -9,7 +9,6 @@ pub mod ui;
 // Library Modules
 use nalgebra::{Vector3};
 use krpc_mars::{RPCClient};
-use ksp_firecontrol::{space_center};
 use std::{error::Error, thread, time};
 
 #[cfg(test)]
