@@ -1,3 +1,8 @@
+fn main() {
+    println!("Hello, world!");
+}
+
+/*
 use nalgebra::{Vector3};
 use krpc_mars::{RPCClient};
 use clap::{Arg,App};
@@ -29,7 +34,7 @@ fn draw_window<W: Write>(term: &mut RawTerminal<W>) -> Result<(),std::io::Error>
         write!(term, "{}{}", cursor::Goto(x,rows), HORZ_BOUNDARY);
     }
 
-    // Print side boarders 
+    // Print side boarders
     for y in 2..rows {
         // Print left
         write!(term, "{}{}", cursor::Goto(1,y), VERT_BOUNDARY);
@@ -88,9 +93,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Main loop for handling information from ksp
     loop {
-        
+
         let vessel = client.mk_call(&space_center::get_active_vessel())?;
-        
+
         let surf_ref_frame = client.mk_call(&vessel.get_surface_reference_frame())?;
         let vessel_ref_frame = client.mk_call(&vessel.get_reference_frame())?;
 
@@ -117,7 +122,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         } else {
             to_degrees(horizon.angle(&direction))
         };
-        
+
         // Calculate heading
         let heading = if horizon[2] < 0.0 {
             360.0 - to_degrees(horizon.angle(&north))
@@ -171,3 +176,4 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn to_degrees(val: f64) -> f64 {
     val * (180.0 / std::f64::consts::PI)
 }
+ */

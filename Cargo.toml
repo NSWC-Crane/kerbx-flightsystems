@@ -1,18 +1,7 @@
-[package]
-name = "ksp-firecontrol"
-version = "0.1.0"
-authors = ["Dr. Whom Ph.D. <drwhom@outlook.com>", "stellaskyler"]
-edition = "2018"
+[workspace]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-nalgebra = "0.24.*"
-clap = "2.33.*"
-termion = "1.5.*"
-
-krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
-
-[build-dependencies]
-glob = "*"
-krpc_mars_terraformer = { git = "https://github.com/drwhomphd/krpc-mars-terraformer.git", branch = "main" }
+members = [
+    "avionics",
+    "flightplanner",
+    "libkerbx",
+]
