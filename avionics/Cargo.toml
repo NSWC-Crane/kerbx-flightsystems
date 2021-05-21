@@ -1,9 +1,11 @@
 [package]
 name = "avionics"
 version = "0.1.0"
-authors = ["Dr. Whom, Ph.D. <drwhom@outlook.com>"]
+authors = ["Dr. Whom Ph.D. <drwhom@outlook.com>", "stellaskyler"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+libkerbx = { path = "../libkerbx" }
+clap = "2.33.*"
