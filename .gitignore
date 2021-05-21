@@ -1,9 +1,9 @@
 /target
 .vscode
-src/drawing.rs
-src/infernal_robotics.rs
-src/kerbal_alarm_clock.rs
-src/remote_tech.rs
-src/space_center.rs
-src/ui.rs
+libkerbx/src/drawing.rs
+libkerbx/src/infernal_robotics.rs
+libkerbx/src/kerbal_alarm_clock.rs
+libkerbx/src/remote_tech.rs
+libkerbx/src/space_center.rs
+libkerbx/src/ui.rs
 .idea
