@@ -6,3 +6,4 @@ src/kerbal_alarm_clock.rs
 src/remote_tech.rs
 src/space_center.rs
 src/ui.rs
+.idea
