@@ -19,18 +19,32 @@ fn main() -> Result<(), Box<dyn Error>> {
         .author(env!("CARGO_PKG_AUTHORS"))
         .about("KerbX Flight Planning Mission Computer")
         .arg(
-            Arg::with_name("ip")
+            Arg::with_name("simip")
                 .short("i")
                 .takes_value(true)
                 .required(true)
-                .help("IP Address of the KRPC Server"),
+                .help("IP Address of the KRPC (Sim) Server"),
         )
         .arg(
-            Arg::with_name("port")
+            Arg::with_name("simport")
                 .short("p")
                 .takes_value(true)
                 .default_value("50000")
-                .help("Port of the KRPC Server"),
+                .help("Port of the KRPC (SIM) Server"),
+        )
+        .arg(
+            Arg::with_name("avionicsip")
+                .short("a")
+                .takes_value(true)
+                .required(true)
+                .help("IP Address of the Avionics Computer on the Transport"),
+        )
+        .arg(
+            Arg::with_name("avionicsport")
+                .short("o")
+                .takes_value(true)
+                .default_value("1797")
+                .help("Port of the Avionics Computer on the Transport"),
         )
         .get_matches();
 
@@ -44,12 +58,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Connect to KSP via krpc-rs
     let server_address = format!(
         "{}:{}",
-        matches.value_of("ip").unwrap(),
-        matches.value_of("port").unwrap()
+        matches.value_of("simip").unwrap(),
+        matches.value_of("simport").unwrap()
     );
     let client = RPCClient::connect("Flight Planner", server_address)
         .expect("Could not connect to KRPC Server.");
 
+    let avionicsip = matches.value_of("avionicsip").unwrap();
+    let avionicsport = matches.value_of("avionicsport").unwrap();
+
+    // Eventually this will need to pull telemetry straight from the avionics computer on the craft
+    // but that requires the comms protocol to be in place
     let transport_craft = KerbxTransport::new(client)?;
 
     // Main loop for handling information from ksp
