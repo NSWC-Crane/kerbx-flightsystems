@@ -10,3 +10,4 @@ edition = "2018"
 libkerbx = { path = "../libkerbx" }
 clap = "2.33.*"
 termion = "1.5.*"
+krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
