@@ -1,17 +1,16 @@
 // KRPC Mars Generated Services
 pub mod drawing;
-pub mod space_center;
 pub mod infernal_robotics;
 pub mod kerbal_alarm_clock;
 pub mod remote_tech;
+pub mod space_center;
 pub mod ui;
 
 // Library Modules
-use nalgebra::{Vector3};
-use krpc_mars::{RPCClient,error::Error};
-use space_center::{Vessel, CelestialBody};
-use std::{thread, time};
 use crate::space_center::ReferenceFrame;
+use krpc_mars::{error::Error, RPCClient};
+use nalgebra::Vector3;
+use space_center::{CelestialBody, Vessel};
 
 /// Abstraction of our KerbX Vessel within the KSP Simulator
 pub struct KerbxTransport {
@@ -50,20 +49,26 @@ impl KerbxTransport {
             up: Vector3::new(1.0, 0.0, 0.0),
         })
     }
-    pub fn get_direction(&self) -> Result<Vector3<f64>,Error> {
+    pub fn get_direction(&self) -> Result<Vector3<f64>, Error> {
         // Get current vessel direction
-        let direction = self.sim_feed.mk_call(&self.vessel_obj.direction(&self.surf_ref_frame))?;
+        let direction = self
+            .sim_feed
+            .mk_call(&self.vessel_obj.direction(&self.surf_ref_frame))?;
 
         Ok(Vector3::new(direction.0, direction.1, direction.2))
     }
 
-    pub fn get_horizon(&self) -> Result<Vector3<f64>,Error> {
+    pub fn get_horizon(&self) -> Result<Vector3<f64>, Error> {
         let direction = self.get_direction()?;
         Ok(Vector3::new(0.0, direction[1], direction[2]))
     }
 
     pub fn get_roll(&self) -> Result<f64, Error> {
-        let vessel_up = self.sim_feed.mk_call(&space_center::transform_direction((0.0, 0.0, -1.0), &self.vessel_ref_frame, &self.surf_ref_frame))?;
+        let vessel_up = self.sim_feed.mk_call(&space_center::transform_direction(
+            (0.0, 0.0, -1.0),
+            &self.vessel_ref_frame,
+            &self.surf_ref_frame,
+        ))?;
         let vessel_up = Vector3::new(vessel_up.0, vessel_up.1, vessel_up.2);
 
         let plane_normal = self.get_direction()?.cross(&self.up);
@@ -98,20 +103,37 @@ impl KerbxTransport {
         };
         Ok(heading)
     }
-    pub fn get_lat(&self) -> Result<f64, Error>  {
-        let position = self.sim_feed.mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
-        let lat = self.sim_feed.mk_call(&self.orbiting_obj.latitude_at_position(position, &self.orb_ref_frame))?;
+    pub fn get_lat(&self) -> Result<f64, Error> {
+        let position = self
+            .sim_feed
+            .mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
+        let lat = self.sim_feed.mk_call(
+            &self
+                .orbiting_obj
+                .latitude_at_position(position, &self.orb_ref_frame),
+        )?;
         Ok(lat)
     }
     pub fn get_lon(&self) -> Result<f64, Error> {
-        let position = self.sim_feed.mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
-        let lon = self.sim_feed.mk_call(&self.orbiting_obj.longitude_at_position(position, &self.orb_ref_frame))?;
+        let position = self
+            .sim_feed
+            .mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
+        let lon = self.sim_feed.mk_call(
+            &self
+                .orbiting_obj
+                .longitude_at_position(position, &self.orb_ref_frame),
+        )?;
         Ok(lon)
-
     }
-    pub fn get_alt(&self) -> Result<f64, Error>  {
-        let position = self.sim_feed.mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
-        let alt = self.sim_feed.mk_call(&self.orbiting_obj.altitude_at_position(position, &self.orb_ref_frame))?;
+    pub fn get_alt(&self) -> Result<f64, Error> {
+        let position = self
+            .sim_feed
+            .mk_call(&self.vessel_obj.position(&self.orb_ref_frame))?;
+        let alt = self.sim_feed.mk_call(
+            &self
+                .orbiting_obj
+                .altitude_at_position(position, &self.orb_ref_frame),
+        )?;
         Ok(alt)
     }
 
