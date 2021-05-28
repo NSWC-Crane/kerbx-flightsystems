@@ -7,10 +7,10 @@ pub mod space_center;
 pub mod ui;
 
 // Library Modules
-use crate::space_center::ReferenceFrame;
+use contracts::*;
 use krpc_mars::{error::Error, RPCClient};
 use nalgebra::Vector3;
-use space_center::{CelestialBody, Vessel};
+use space_center::{CelestialBody, ReferenceFrame, Vessel};
 
 /// Abstraction of our KerbX Vessel within the KSP Simulator
 pub struct KerbxTransport {
@@ -63,6 +63,7 @@ impl KerbxTransport {
         Ok(Vector3::new(0.0, direction[1], direction[2]))
     }
 
+    #[ensures(ret.is_ok() ->  (*ret.as_ref().unwrap() > 180.0 && *ret.as_ref().unwrap() <= 180.0), "Roll must be -180 < x <= +180 degrees." )]
     pub fn get_roll(&self) -> Result<f64, Error> {
         let vessel_up = self.sim_feed.mk_call(&space_center::transform_direction(
             (0.0, 0.0, -1.0),
