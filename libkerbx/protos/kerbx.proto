@@ -1,0 +1,97 @@
+// Protocol format for the kerbx flight system. This defines the messages sent between the avionics computer and the
+// flight planning system.
+syntax = "proto3";
+package kerbx.schema;
+
+// Encodes epoch time
+message Time {
+  // Assuming epoch time is always > 2^28
+  fixed64 time = 1;
+}
+
+message WatchDog {
+  Time time = 1;
+  enum Status {
+    ASKALIVE = 0;
+    ACKALIVE = 1;
+    ASKPOST = 2;
+    ACKPOST = 3;
+    ASKLAUNCH = 4;
+    ACKLAUNCH = 5;
+    LANDED = 6;
+    ERROR = 7;
+  }
+  Status status = 2;
+}
+
+message Countdown {
+  Time time = 1;
+  uint64 seconds_to_launch = 2;
+}
+
+message Telemetry {
+  Time time = 1;
+  double lat = 2;
+  double lon = 3;
+  double alt = 4;
+  double roll = 5;
+  double pitch = 6;
+  // a.k.a. heading
+  double yaw = 7;
+  double velocity = 8;
+  uint32 mission_plan_step = 9;
+}
+
+message Position {
+  double lat = 1;
+  double lon = 2;
+}
+
+message Trigger {
+  oneof trigger_condition {
+    Time time = 1;
+    double alt = 2;
+    Position position = 3;
+  }
+}
+
+message ThrottleLevel {
+  float throttle = 1;
+}
+
+message Reorient {
+  float roll = 1;
+  float pitch = 2;
+  // a.k.a. heading
+  float yaw = 3;
+}
+
+// Individual step in the flight plan
+message Step {
+  uint32 count = 1;
+
+  enum ActionType {
+    // Engage the next stage[
+    NEXTSTAGE = 0;
+    THROTTLELEVEL = 1;
+    // Do nothing
+    COAST = 2;
+    REORIENT = 3;
+  }
+  ActionType type = 2;
+  // Each step only has one action. ThrottleLevel and Reorient are complex actions requiring an extra attribute
+  // to be defined. NEXTSTAGE and COAST are simple actions so do not need specific arguments.
+  oneof action {
+    ThrottleLevel throttle = 3;
+    Reorient position = 4;
+  };
+  Trigger trigger = 5;
+}
+
+// A flight plan is a collection of steps
+message FlightPlan {
+  uint32 step_count = 1;
+  repeated Step steps = 2;
+}
+
+
