@@ -6,4 +6,5 @@ libkerbx/src/kerbal_alarm_clock.rs
 libkerbx/src/remote_tech.rs
 libkerbx/src/space_center.rs
 libkerbx/src/ui.rs
+libkerbx/src/kerbx.rs
 .idea
