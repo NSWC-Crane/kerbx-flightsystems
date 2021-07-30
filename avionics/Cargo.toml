@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 libkerbx = { path = "../libkerbx" }
 clap = "2.33.*"
+krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
