@@ -64,6 +64,20 @@ impl KerbxTransport {
         Ok(Vector3::new(0.0, direction[1], direction[2]))
     }
 
+    /// m/s in reference to the nearest orbiting object
+    /// NOTE: Currently bugged and will always return 0 for some reason.
+    pub fn get_velocity(&self) -> Result<f64, Error> {
+        let velocity = self
+            .sim_feed
+            .mk_call(&self.vessel_obj.velocity(&self.orb_ref_frame))?;
+
+        // velocity rpc call is returning 0
+        dbg!("{}", velocity);
+
+        // velocity is returned as a vector with the magnitude being the linear speed
+        Ok((velocity.0.powi(2) + velocity.1.powi(2) + velocity.2.powi(2)).sqrt())
+    }
+
     #[ensures(ret.is_ok() ->  (*ret.as_ref().unwrap() > -180.0 && *ret.as_ref().unwrap() <= 180.0), "Roll must be -180 < x <= +180 degrees." )]
     pub fn get_roll(&self) -> Result<f64, Error> {
         let vessel_up = self.sim_feed.mk_call(&space_center::transform_direction(
