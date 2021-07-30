@@ -3,10 +3,12 @@
 syntax = "proto3";
 package kerbx.schema;
 
-// Encodes epoch time
+// Encodes epoch time. Set as its own message as Time is recorded multiple places
+// and must have consistent semantics across all packets. This allows us to change
+// semantics in one spot and have it reverberate out.
 message Time {
   // Assuming epoch time is always > 2^28
-  fixed64 time = 1;
+  fixed64 seconds = 1;
 }
 
 message WatchDog {
