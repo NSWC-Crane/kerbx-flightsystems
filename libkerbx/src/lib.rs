@@ -67,15 +67,20 @@ impl KerbxTransport {
     /// m/s in reference to the nearest orbiting object
     /// NOTE: Currently bugged and will always return 0 for some reason.
     pub fn get_velocity(&self) -> Result<f64, Error> {
-        let velocity = self
-            .sim_feed
-            .mk_call(&self.vessel_obj.velocity(&self.orb_ref_frame))?;
-
         // velocity rpc call is returning 0
-        dbg!("{}", velocity);
+        let flight = self
+            .sim_feed
+            .mk_call(&self.vessel_obj.flight(&self.surf_ref_frame))?;
 
-        // velocity is returned as a vector with the magnitude being the linear speed
-        Ok((velocity.0.powi(2) + velocity.1.powi(2) + velocity.2.powi(2)).sqrt())
+        // True Air Speed using the surface reference frame provides velocity in m/s based on
+        // the surface
+        Ok(self.sim_feed.mk_call(&flight.get_true_air_speed())?.into())
+
+        // Returning true air speed as the following rpc calls fail to return data:
+        // flight.get_speed(), flight.get_velocity, vessel.get_velocity
+        // If you can ever get velocity to return a three-tuple, you can use the following to calculate
+        // the linear velocity:
+        //Ok((velocity.0.powi(2) + velocity.1.powi(2) + velocity.2.powi(2)).sqrt())
     }
 
     #[ensures(ret.is_ok() ->  (*ret.as_ref().unwrap() > -180.0 && *ret.as_ref().unwrap() <= 180.0), "Roll must be -180 < x <= +180 degrees." )]
