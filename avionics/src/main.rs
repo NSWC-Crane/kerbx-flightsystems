@@ -3,8 +3,11 @@ use krpc_mars::RPCClient;
 use libkerbx::kerbx::{Telemetry, Time};
 use libkerbx::KerbxTransport;
 
+use avionics::AvionicsState;
 use std::time::{Duration, SystemTime};
 use std::{error::Error, thread};
+
+use avionics::Avionics;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments.
@@ -48,10 +51,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         matches.value_of("simip").unwrap(),
         matches.value_of("simport").unwrap()
     );
+
+    let mut status = Avionics::new();
+
+    // Connect to flight planning server and send ALIVE
+
+    // Now Entering POST
+    status.to_post();
+
+    // Open connection to our simulated environment to pull telemetry/carry out actions
     let client = RPCClient::connect("Avionics Computer", server_address)
         .expect("Could not connect to KRPC Server.");
-
     let ship = KerbxTransport::new(client)?;
+
+    // Send POST status
+
+    // Now wait for flight plan...
+    status.to_idle();
 
     loop {
         let telemetry = build_telemetry_packet(&ship)?;
