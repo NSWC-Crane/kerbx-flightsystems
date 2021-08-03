@@ -5,6 +5,7 @@ use termion::{async_stdin, clear, cursor, raw::IntoRawMode, raw::RawTerminal, te
 use std::io::{stdout, Read, Write};
 use std::{error::Error, thread, time};
 
+use flightplanner::PlanningServer;
 use libkerbx::KerbxTransport;
 
 const HORZ_BOUNDARY: &'static str = "─";
@@ -33,18 +34,18 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .help("Port of the KRPC (SIM) Server"),
         )
         .arg(
-            Arg::with_name("avionicsip")
+            Arg::with_name("plannerip")
                 .short("a")
                 .takes_value(true)
-                .required(true)
-                .help("IP Address of the Avionics Computer on the Transport"),
+                .default_value("127.0.0.1")
+                .help("IP Address to start the Flight Planner TCP Server on"),
         )
         .arg(
-            Arg::with_name("avionicsport")
+            Arg::with_name("plannerport")
                 .short("o")
                 .takes_value(true)
-                .default_value("1797")
-                .help("Port of the Avionics Computer on the Transport"),
+                .default_value("51961")
+                .help("Port to start the Flight Planner TCP Server on"),
         )
         .get_matches();
 
@@ -56,20 +57,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     draw_window(&mut stdout)?;
 
     // Connect to KSP via krpc-rs
-    let server_address = format!(
+    let krpc_server_address = format!(
         "{}:{}",
         matches.value_of("simip").unwrap(),
         matches.value_of("simport").unwrap()
     );
-    let client = RPCClient::connect("Flight Planner", server_address)
+    let client = RPCClient::connect("Flight Planner", krpc_server_address)
         .expect("Could not connect to KRPC Server.");
-
-    let avionicsip = matches.value_of("avionicsip").unwrap();
-    let avionicsport = matches.value_of("avionicsport").unwrap();
 
     // Eventually this will need to pull telemetry straight from the avionics computer on the craft
     // but that requires the comms protocol to be in place
     let transport_craft = KerbxTransport::new(client)?;
+
+    // Start up the flight planning server
+    let plan_server = PlanningServer::new(
+        String::from(matches.value_of("plannerip").unwrap()),
+        String::from(matches.value_of("plannerport").unwrap()),
+    )?;
 
     // Main loop for handling information from ksp
     loop {
@@ -92,6 +96,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         mvaddstr(&mut stdout, 3, 6, format!("Lat: {}", lat).as_str())?;
         mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str())?;
         mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str())?;
+
+        plan_server.process_input_messages();
 
         thread::sleep(time::Duration::from_millis(100));
     }
@@ -147,22 +153,3 @@ fn mvaddstr<W: Write>(
     write!(term, "{}{}{}", cursor::Goto(col, row), text, cursor::Hide)?;
     Ok(())
 }
-
-/*
-
-
-
-
-
-
-
-
-fn main() -> Result<(), Box<dyn Error>> {
-
-    /
-}
-
-fn to_degrees(val: f64) -> f64 {
-    val * (180.0 / std::f64::consts::PI)
-}
- */
