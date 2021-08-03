@@ -1,4 +1,8 @@
 use contracts::*;
+use krpc_mars::protobuf::CodedOutputStream;
+use libkerbx::kerbx::*;
+use std::net::TcpStream;
+use std::time::SystemTime;
 
 // Derive allows for boolean comparison of enums used in the contracts
 #[derive(Eq, PartialEq)]
@@ -18,15 +22,18 @@ pub struct Avionics {
     stage: u8,
     /// Last error message set
     error_message: String,
+    flight_planner: TcpStream,
 }
 
 impl Avionics {
-    pub fn new() -> Avionics {
-        Avionics {
+    pub fn new(ip: String, port: String) -> Result<Avionics, std::io::Error> {
+        let connection = TcpStream::connect(format!("{}:{}", ip, port))?;
+        Ok(Avionics {
             state: AvionicsState::Off,
             stage: 0,
             error_message: String::from(""),
-        }
+            flight_planner: connection,
+        })
     }
 
     pub fn set_error(&mut self, message: &str) {
@@ -73,5 +80,26 @@ impl Avionics {
     pub fn to_error(&mut self, message: &str) {
         self.state = AvionicsState::Error;
         self.error_message = String::from(message);
+    }
+
+    pub fn send_alive(&mut self) {
+        let mut message = WatchDog::new();
+        message.set_status(WatchDog_Status::ACKALIVE);
+        message.set_time(Avionics::get_time().unwrap());
+
+        let mut wrapper = Sheath::new();
+        wrapper.set_field_type(Sheath_MessageType::WATCHDOG);
+        wrapper.set_watchdog(message);
+
+        let mut output = CodedOutputStream::new(&mut self.flight_planner);
+        output.write_message_no_tag(&wrapper).unwrap();
+    }
+
+    pub fn get_time() -> Result<Time, std::time::SystemTimeError> {
+        let mut time = Time::new();
+        time.seconds = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+        Ok(time)
     }
 }

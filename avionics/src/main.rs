@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             Arg::with_name("plannerport")
                 .short("o")
                 .takes_value(true)
-                .default_value("1797")
+                .default_value("51961")
                 .help("Port of the Flight Planning Computer in Mission Control"),
         )
         .get_matches();
@@ -52,9 +52,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         matches.value_of("simport").unwrap()
     );
 
-    let mut status = Avionics::new();
-
     // Connect to flight planning server and send ALIVE
+    let mut status = Avionics::new(
+        String::from(matches.value_of("plannerip").unwrap()),
+        String::from(matches.value_of("plannerport").unwrap()),
+    )?;
+    status.send_alive();
 
     // Now Entering POST
     status.to_post();
@@ -71,15 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
         let telemetry = build_telemetry_packet(&ship)?;
-        println!("[[[[ {} ]]]]", telemetry.get_time().get_seconds());
-        println!("Roll:{}", telemetry.get_roll());
-        println!("Pitch:{}", telemetry.get_pitch());
-        println!("Heading:{}", telemetry.get_yaw());
-        println!("Lat:{}", telemetry.get_lat());
-        println!("Lon:{}", telemetry.get_lon());
-        println!("Alt:{}", telemetry.get_alt());
-        println!("Velocity:{}", telemetry.get_velocity());
-        println!("[[[[ END ]]]]");
+        status.send_alive();
         thread::sleep(Duration::from_millis(100));
     }
 
