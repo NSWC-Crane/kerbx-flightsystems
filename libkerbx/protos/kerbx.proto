@@ -96,4 +96,22 @@ message FlightPlan {
   repeated Step steps = 2;
 }
 
+// Wrapper around the major message types the KerbX protocol can send. This message allows easy decoding of
+// multiple message types over the same socket
+message Sheath {
+  enum MessageType {
+    WATCHDOG = 0;
+    COUNTCOWN = 1;
+    TELEMETRY = 2;
+    FLIGHTPLAN = 3;
+  }
+  MessageType type = 1;
+  oneof message {
+    WatchDog watchdog = 2;
+    Countdown countdown = 3;
+    Telemetry telemetry = 4;
+    FlightPlan flightplan = 5;
+  };
+}
+
 
