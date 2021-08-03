@@ -4,9 +4,19 @@ An avionics and mission planning computer for the Rapid Kerbal Delivery System. 
 project leverages Kerbal Space Program and KRPC to help teach programming concepts
 for embedded safety-critical systems.
 
+## TODO
+1. Make sure networking is asynchronous and non-blocking.
+
 ## Workspace Elements
 
+### Avionics Computer
+
+### Flight Planner
+
 ## Requirements
+
+The following packages are required prior to building all tooling used and required by kerbx flight systems:
+
 
 ### Installing Bazelisk
 Bazelisk is the preferred method to install the bazel build system. Bazel is the build system required by krpc.
