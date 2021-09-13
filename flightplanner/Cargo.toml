@@ -11,4 +11,5 @@ libkerbx = { path = "../libkerbx" }
 clap = "2.33.*"
 termion = "1.5.*"
 protobuf = "2.*"
+tokio = { version = "1", features = ["full"]}
 krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
