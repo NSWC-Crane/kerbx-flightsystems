@@ -104,6 +104,7 @@ message Sheath {
     COUNTCOWN = 1;
     TELEMETRY = 2;
     FLIGHTPLAN = 3;
+    EMPTY = 4;
   }
   MessageType type = 1;
   oneof message {
