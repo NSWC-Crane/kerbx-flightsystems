@@ -1,11 +1,17 @@
 use clap::{App, Arg};
 use krpc_mars::RPCClient;
 use termion::{async_stdin, clear, cursor, raw::IntoRawMode, raw::RawTerminal, terminal_size};
+use tokio::sync::broadcast;
+use tokio::sync::broadcast::error::TryRecvError;
+use tokio::sync::broadcast::{Receiver, Sender};
+use tokio::task;
 
 use std::io::{stdout, Read, Write};
+use std::sync::Arc;
 use std::{error::Error, thread, time};
 
 use flightplanner::PlanningServer;
+use libkerbx::space_center::orbit_static_reference_plane_normal;
 use libkerbx::KerbxTransport;
 
 const HORZ_BOUNDARY: &'static str = "─";
@@ -13,7 +19,8 @@ const VERT_BOUNDARY: &'static str = "│";
 const WIN_TITLE: &'static str = "KerbX Flight Planner";
 const QUIT_MSG: &'static str = "Press 'q' to quit.";
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+pub async fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments.
     let matches = App::new("KerbX Flight Planner")
         .version(env!("CARGO_PKG_VERSION"))
@@ -73,7 +80,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let plan_server = PlanningServer::new(
         String::from(matches.value_of("plannerip").unwrap()),
         String::from(matches.value_of("plannerport").unwrap()),
-    )?;
+    )
+    .await?;
+
+    // Create the communications channels between async processes
+    let (tx, mut rx_gui) = broadcast::channel(32);
+
+    task::spawn(PlanningServer::recv_and_decode(plan_server, tx));
 
     // Main loop for handling information from ksp
     loop {
@@ -97,7 +110,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str())?;
         mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str())?;
 
-        plan_server.process_input_messages();
+        let message = match rx_gui.try_recv() {
+            Ok(msg) => PlanningServer::unsheath(msg),
+            Err(e) => (),
+        };
 
         thread::sleep(time::Duration::from_millis(100));
     }
