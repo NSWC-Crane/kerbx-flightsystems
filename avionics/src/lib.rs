@@ -92,7 +92,10 @@ impl Avionics {
         wrapper.set_watchdog(message);
 
         let mut output = CodedOutputStream::new(&mut self.flight_planner);
-        output.write_message_no_tag(&wrapper).unwrap();
-        output.flush();
+        if let Ok(()) = output.write_message_no_tag(&wrapper) {
+            output.flush();
+        } else {
+            eprintln!("Error writing message to flight planner.");
+        }
     }
 }
