@@ -5,8 +5,8 @@ project leverages Kerbal Space Program and KRPC to help teach programming concep
 for embedded safety-critical systems.
 
 ## TODO
-1. Make sure networking is asynchronous and non-blocking.
-
+1. Make sure errors are handled at the highest level and are not set to panic upon happening
+2. All Time calculations and associated protobuf definitions should be higher resolution
 ## Workspace Elements
 
 ### Avionics Computer
