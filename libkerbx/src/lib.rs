@@ -171,11 +171,16 @@ impl KerbxTransport {
     // TODO: Error passing
     pub fn trigger_stage(&self) -> Result<(), Error> {
         let control = self.sim_feed.mk_call(&self.vessel_obj.get_control())?;
-        let result = self.sim_feed.mk_call(&control.activate_next_stage());
-        match result {
-            Ok(x) => Ok(()),
-            Err(e) => Err(e),
-        }
+        let result = self.sim_feed.mk_call(&control.activate_next_stage())?;
+        Ok(())
+    }
+
+    /// percent must be a value between 0 and 1.
+    #[requires(percent >= 0.0 && percent <= 1.0, "Throttle percent only valid between 0 and 1.")]
+    pub fn set_throttle(&self, percent: f32) -> Result<(), Error> {
+        let control = self.sim_feed.mk_call(&self.vessel_obj.get_control())?;
+        self.sim_feed.mk_call(&control.set_throttle(percent))?;
+        Ok(())
     }
 
     fn to_degrees(&self, val: f64) -> f64 {
