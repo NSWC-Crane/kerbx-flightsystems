@@ -168,6 +168,16 @@ impl KerbxTransport {
         Ok(alt)
     }
 
+    // TODO: Error passing
+    pub fn trigger_stage(&self) -> Result<(), Error> {
+        let control = self.sim_feed.mk_call(&self.vessel_obj.get_control())?;
+        let result = self.sim_feed.mk_call(&control.activate_next_stage());
+        match result {
+            Ok(x) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     fn to_degrees(&self, val: f64) -> f64 {
         val * (180.0 / std::f64::consts::PI)
     }
