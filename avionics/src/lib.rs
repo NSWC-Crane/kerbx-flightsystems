@@ -85,7 +85,7 @@ impl Avionics {
     pub fn send_alive(&mut self) {
         let mut message = WatchDog::new();
         message.set_status(WatchDog_Status::ACKALIVE);
-        message.set_time(Avionics::get_time().unwrap());
+        message.set_time(libkerbx::time().unwrap());
 
         let mut wrapper = Sheath::new();
         wrapper.set_field_type(Sheath_MessageType::WATCHDOG);
@@ -93,13 +93,6 @@ impl Avionics {
 
         let mut output = CodedOutputStream::new(&mut self.flight_planner);
         output.write_message_no_tag(&wrapper).unwrap();
-    }
-
-    pub fn get_time() -> Result<Time, std::time::SystemTimeError> {
-        let mut time = Time::new();
-        time.seconds = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)?
-            .as_secs();
-        Ok(time)
+        output.flush();
     }
 }

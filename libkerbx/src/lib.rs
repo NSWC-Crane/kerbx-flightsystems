@@ -8,10 +8,20 @@ pub mod space_center;
 pub mod ui;
 
 // Library Modules
+use crate::kerbx::Time;
 use contracts::*;
 use krpc_mars::{error::Error, RPCClient};
 use nalgebra::Vector3;
 use space_center::{CelestialBody, ReferenceFrame, Vessel};
+use std::time::SystemTime;
+
+pub fn time() -> Result<Time, std::time::SystemTimeError> {
+    let mut time = Time::new();
+    time.seconds = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .as_secs();
+    Ok(time)
+}
 
 /// Abstraction of our KerbX Vessel within the KSP Simulator
 pub struct KerbxTransport {
