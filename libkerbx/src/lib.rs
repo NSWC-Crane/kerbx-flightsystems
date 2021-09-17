@@ -183,6 +183,18 @@ impl KerbxTransport {
         Ok(())
     }
 
+    pub fn engage_auto_pilot(&self) -> Result<(), Error> {
+        let autopilot = self.sim_feed.mk_call(&self.vessel_obj.get_auto_pilot())?;
+        self.sim_feed.mk_call(&autopilot.engage())?;
+        Ok(())
+    }
+
+    pub fn disengage_auto_pilo(&self) -> Result<(), Error> {
+        let autopilot = self.sim_feed.mk_call(&self.vessel_obj.get_auto_pilot())?;
+        self.sim_feed.mk_call(&autopilot.disengage())?;
+        Ok(())
+    }
+
     fn to_degrees(&self, val: f64) -> f64 {
         val * (180.0 / std::f64::consts::PI)
     }
