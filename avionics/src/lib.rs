@@ -1,6 +1,8 @@
 use contracts::*;
 use krpc_mars::protobuf::CodedOutputStream;
+use krpc_mars::RPCClient;
 use libkerbx::kerbx::*;
+use libkerbx::KerbxTransport;
 use std::net::TcpStream;
 use std::time::SystemTime;
 
@@ -23,16 +25,22 @@ pub struct Avionics {
     /// Last error message set
     error_message: String,
     flight_planner: TcpStream,
+    sensors: KerbxTransport,
 }
 
 impl Avionics {
-    pub fn new(ip: String, port: String) -> Result<Avionics, std::io::Error> {
+    pub fn new(
+        ip: String,
+        port: String,
+        sensors: KerbxTransport,
+    ) -> Result<Avionics, std::io::Error> {
         let connection = TcpStream::connect(format!("{}:{}", ip, port))?;
         Ok(Avionics {
             state: AvionicsState::Off,
             stage: 0,
             error_message: String::from(""),
             flight_planner: connection,
+            sensors,
         })
     }
 
@@ -90,6 +98,42 @@ impl Avionics {
         let mut wrapper = Sheath::new();
         wrapper.set_field_type(Sheath_MessageType::WATCHDOG);
         wrapper.set_watchdog(message);
+
+        let mut output = CodedOutputStream::new(&mut self.flight_planner);
+        if let Ok(()) = output.write_message_no_tag(&wrapper) {
+            output.flush();
+        } else {
+            eprintln!("Error writing message to flight planner.");
+        }
+    }
+
+    pub fn send_telemetry(&mut self) {
+        // In a real world situation these errors should be passed up the stack and handled in
+        // the main avionics loop. I'm running out of time as I write this, so this will just fail
+        // early and hopefully not often.
+        let mut message = Telemetry::new();
+        message.set_lat(self.sensors.get_lat().expect("Error getting Latitude."));
+        message.set_lon(self.sensors.get_lon().expect("Error getting Longitude."));
+        message.set_alt(self.sensors.get_alt().expect("Error getting altitude."));
+        message.set_yaw(self.sensors.get_heading().expect("Error getting heading."));
+        message.set_pitch(self.sensors.get_pitch().expect("Error getting pitch."));
+        message.set_roll(self.sensors.get_roll().expect("Error getting roll."));
+        message.set_velocity(
+            self.sensors
+                .get_velocity()
+                .expect("Error getting velocity."),
+        );
+
+        let mut time = Time::new();
+        time.seconds = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("Error getting system time.")
+            .as_secs();
+        message.set_time(time);
+
+        let mut wrapper = Sheath::new();
+        wrapper.set_field_type(Sheath_MessageType::TELEMETRY);
+        wrapper.set_telemetry(message);
 
         let mut output = CodedOutputStream::new(&mut self.flight_planner);
         if let Ok(()) = output.write_message_no_tag(&wrapper) {
