@@ -19,9 +19,11 @@ message WatchDog {
     ASKPOST = 2;
     ACKPOST = 3;
     ASKLAUNCH = 4;
+    // ACK LAUNCH means vehicle is in Countdown state
     ACKLAUNCH = 5;
-    LANDED = 6;
-    ERROR = 7;
+    INFLIGHT = 6;
+    LANDED = 7;
+    ERROR = 8;
   }
   Status status = 2;
 }
@@ -73,12 +75,14 @@ message Step {
   uint32 count = 1;
 
   enum ActionType {
-    // Engage the next stage[
+    // Engage the next stage
     NEXTSTAGE = 0;
     THROTTLELEVEL = 1;
     // Do nothing
     COAST = 2;
     REORIENT = 3;
+    // Make sure launch is explicit for safety
+    LAUNCH = 4;
   }
   ActionType type = 2;
   // Each step only has one action. ThrottleLevel and Reorient are complex actions requiring an extra attribute
