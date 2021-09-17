@@ -50,29 +50,12 @@ impl PlanningServer {
 
         loop {
             // TODO: Properly handle errors from read_message()
-            // Getting hacky to ignore the error from read messsage. We will throw the error away
-            // and create an empty sheath if the return is None. We should probably fix this later
-            // as it will create a way for bugs to hide.
-
             let message: Sheath = input
                 .read_message()
-                .ok()
-                .or_else(PlanningServer::empty_sheath)
-                .unwrap();
+                .expect("Error reading sheath from CodedInputStream");
 
             // Does not gurantee receivers will read the message on Ok()
             tx.send(message).expect("Error sending sheath to channel.");
-        }
-    }
-
-    pub fn unsheath(item: &Sheath) {
-        match item.get_field_type() {
-            Sheath_MessageType::COUNTCOWN => eprintln!("Countdown message!"),
-            Sheath_MessageType::FLIGHTPLAN => eprintln!("Flightplan message!"),
-            Sheath_MessageType::TELEMETRY => eprintln!("Telemetry message!"),
-            Sheath_MessageType::WATCHDOG => eprintln!("Watchdog message!"),
-            Sheath_MessageType::EMPTY => eprintln!("Empty sheath!"),
-            _ => eprintln!("Unknown message type. Should be unreachable."),
         }
     }
 }

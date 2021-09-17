@@ -64,19 +64,20 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     // Draw our border
     draw_window(&mut stdout)?;
 
-    // Connect to KSP via krpc-rs
-    let krpc_server_address = format!(
-        "{}:{}",
-        matches.value_of("simip").unwrap(),
-        matches.value_of("simport").unwrap()
-    );
-    let client = RPCClient::connect("Flight Planner", krpc_server_address)
-        .expect("Could not connect to KRPC Server.");
+    /*
+        // Connect to KSP via krpc-rs
+        let krpc_server_address = format!(
+            "{}:{}",
+            matches.value_of("simip").unwrap(),
+            matches.value_of("simport").unwrap()
+        );
+        let client = RPCClient::connect("Flight Planner", krpc_server_address)
+            .expect("Could not connect to KRPC Server.");
 
-    // Eventually this will need to pull telemetry straight from the avionics computer on the craft
-    // but that requires the comms protocol to be in place
-    let transport_craft = KerbxTransport::new(client)?;
-
+        // Eventually this will need to pull telemetry straight from the avionics computer on the craft
+        // but that requires the comms protocol to be in place
+        let transport_craft = KerbxTransport::new(client)?;
+    */
     // Start up the flight planning server
     let plan_server = PlanningServer::new(
         String::from(matches.value_of("plannerip").unwrap()),
@@ -91,27 +92,11 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
 
     // Main loop for handling information from ksp
     loop {
-        let pitch = transport_craft.get_pitch()?;
-        let heading = transport_craft.get_heading()?;
-        let roll = transport_craft.get_roll()?;
-        let lat = transport_craft.get_lat()?;
-        let lon = transport_craft.get_lon()?;
-        let alt = transport_craft.get_alt()?;
-
         // Quit on recieving q
         let b = stdin.next();
         if let Some(Ok(b'q')) = b {
             break;
         }
-
-        /*
-                mvaddstr(&mut stdout, 3, 3, format!("Yaw: {}", heading).as_str())?;
-                mvaddstr(&mut stdout, 3, 4, format!("Pitch: {}", pitch).as_str())?;
-                mvaddstr(&mut stdout, 3, 5, format!("Roll: {}", roll).as_str())?;
-                mvaddstr(&mut stdout, 3, 6, format!("Lat: {}", lat).as_str())?;
-                mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str())?;
-                mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str())?;
-        */
 
         if let Ok(message) = rx_gui.try_recv() {
             match message.field_type {
@@ -120,10 +105,58 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     mvaddstr(
                         &mut stdout,
                         3,
+                        10,
+                        format!("Watchdog sent at: {}.", watchdog.get_time().get_seconds())
+                            .as_str(),
+                    )?;
+                }
+                Sheath_MessageType::TELEMETRY => {
+                    let telemetry = message.get_telemetry();
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        3,
+                        format!("Yaw: {}", telemetry.get_yaw()).as_str(),
+                    )?;
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        4,
+                        format!("Pitch: {}", telemetry.get_pitch()).as_str(),
+                    )?;
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        5,
+                        format!("Roll: {}", telemetry.get_roll()).as_str(),
+                    )?;
+                    mvaddstr(
+                        &mut stdout,
+                        3,
                         6,
+                        format!("Lat: {}", telemetry.get_lat()).as_str(),
+                    )?;
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        7,
+                        format!("Lon: {}", telemetry.get_lon()).as_str(),
+                    )?;
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        8,
+                        format!("Alt: {}", telemetry.get_alt()).as_str(),
+                    )?;
+                }
+                Sheath_MessageType::EMPTY => {
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        11,
                         format!(
-                            "Watchdog received at: {}",
-                            watchdog.get_time().get_seconds()
+                            "Empty Sheath Sent at {}",
+                            libkerbx::time().unwrap().get_seconds()
                         )
                         .as_str(),
                     )?;
@@ -132,7 +165,7 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                     mvaddstr(
                         &mut stdout,
                         3,
-                        7,
+                        12,
                         format!(
                             "Unsupported Sheath Type Sent at {}",
                             libkerbx::time().unwrap().get_seconds()
@@ -142,19 +175,22 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
         } else {
+            // This can just mean there's nothing to receive
+            /*
             mvaddstr(
                 &mut stdout,
                 3,
-                8,
+                20,
                 format!(
                     "try_recv error at {}",
                     libkerbx::time().unwrap().get_seconds()
                 )
                 .as_str(),
             )?;
+             */
         }
         stdout.flush();
-        thread::sleep(time::Duration::from_millis(100));
+        //thread::sleep(time::Duration::from_millis(100));
     }
 
     // Cleanup after ourselves
