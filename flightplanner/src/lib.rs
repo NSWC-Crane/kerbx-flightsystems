@@ -16,7 +16,7 @@ impl PlanningServer {
     pub fn get_listener(&self) -> &TcpListener {
         &self.listener
     }
-    fn empty_sheath() -> Option<Sheath> {
+    pub fn empty_sheath() -> Option<Sheath> {
         let mut ret: Sheath = Sheath::new();
         ret.set_field_type(Sheath_MessageType::EMPTY);
         Some(ret)
