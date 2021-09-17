@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::{error::Error, thread, time};
 
 use flightplanner::PlanningServer;
+use libkerbx::kerbx::{Sheath, Sheath_MessageType};
 use libkerbx::space_center::orbit_static_reference_plane_normal;
 use libkerbx::KerbxTransport;
 
@@ -103,18 +104,56 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        mvaddstr(&mut stdout, 3, 3, format!("Yaw: {}", heading).as_str())?;
-        mvaddstr(&mut stdout, 3, 4, format!("Pitch: {}", pitch).as_str())?;
-        mvaddstr(&mut stdout, 3, 5, format!("Roll: {}", roll).as_str())?;
-        mvaddstr(&mut stdout, 3, 6, format!("Lat: {}", lat).as_str())?;
-        mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str())?;
-        mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str())?;
+        /*
+                mvaddstr(&mut stdout, 3, 3, format!("Yaw: {}", heading).as_str())?;
+                mvaddstr(&mut stdout, 3, 4, format!("Pitch: {}", pitch).as_str())?;
+                mvaddstr(&mut stdout, 3, 5, format!("Roll: {}", roll).as_str())?;
+                mvaddstr(&mut stdout, 3, 6, format!("Lat: {}", lat).as_str())?;
+                mvaddstr(&mut stdout, 3, 7, format!("Lon: {}", lon).as_str())?;
+                mvaddstr(&mut stdout, 3, 8, format!("Alt: {}", alt).as_str())?;
+        */
 
-        let message = match rx_gui.try_recv() {
-            Ok(msg) => PlanningServer::unsheath(msg),
-            Err(e) => (),
-        };
-
+        if let Ok(message) = rx_gui.try_recv() {
+            match message.field_type {
+                Sheath_MessageType::WATCHDOG => {
+                    let watchdog = message.get_watchdog();
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        6,
+                        format!(
+                            "Watchdog received at: {}",
+                            watchdog.get_time().get_seconds()
+                        )
+                        .as_str(),
+                    )?;
+                }
+                _ => {
+                    mvaddstr(
+                        &mut stdout,
+                        3,
+                        7,
+                        format!(
+                            "Unsupported Sheath Type Sent at {}",
+                            libkerbx::time().unwrap().get_seconds()
+                        )
+                        .as_str(),
+                    )?;
+                }
+            }
+        } else {
+            mvaddstr(
+                &mut stdout,
+                3,
+                8,
+                format!(
+                    "try_recv error at {}",
+                    libkerbx::time().unwrap().get_seconds()
+                )
+                .as_str(),
+            )?;
+        }
+        stdout.flush();
         thread::sleep(time::Duration::from_millis(100));
     }
 
