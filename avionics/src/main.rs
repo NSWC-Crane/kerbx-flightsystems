@@ -9,6 +9,8 @@ use std::{error::Error, thread};
 
 use avionics::Avionics;
 
+static DEFAULT_FLIGHT_PLAN: &'static str = r#"{"step_count":1,"steps":[{"count":1,"field_type":"IGNITE","trigger":{"trigger_condition":{"time":{"seconds":0}}},"action":null}]}"#;
+
 fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments.
     let matches = App::new("KerbX Avionics Computer")
@@ -45,17 +47,27 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .get_matches();
 
-    // Connect to KSP via krpc-rs
+    // Connect to KSP via krpc-rs -- this provides our sensor inputs and control surface outputs
     let server_address = format!(
         "{}:{}",
         matches.value_of("simip").unwrap(),
         matches.value_of("simport").unwrap()
     );
-
-    // Open connection to our simulated environment to pull telemetry/carry out actions
     let client = RPCClient::connect("Avionics Computer", server_address)
         .expect("Could not connect to KRPC Server.");
+
+    // We obfuscate the RPC interface with our KerbxTransport wrapper.
+    // TODO: Move RPC connections into the KerbxTransport Interface and just pass in the simip and simport
     let ship = KerbxTransport::new(client)?;
+
+    // Area where we perform the Power-On-Self-Test Routine Operations //
+
+    // Now Entering POST
+    status.to_post();
+
+    //***********************************************************************//
+
+    // Area where we perform initial load of the flight plan from the flight planning computer //
 
     // Connect to flight planning server and send ALIVE
     let mut status = Avionics::new(
@@ -64,15 +76,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         ship,
     )?;
     status.send_alive();
-
-    // Now Entering POST
-    status.to_post();
-
-    // Send POST status
-
     // Now wait for flight plan...
     status.to_idle();
+    //**********************************************************************//
 
+    // Area where we initiate launch //
+
+    //*********************************************************************//
+
+    // Flight control loop
     loop {
         status.send_alive();
         status.send_telemetry();
