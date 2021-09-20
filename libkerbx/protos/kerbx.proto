@@ -81,12 +81,12 @@ message Step {
     // Do nothing
     COAST = 2;
     REORIENT = 3;
-    // Make sure launch is explicit for safety
-    LAUNCH = 4;
+    // Make sure IGNITE is explicit for safety
+    IGNITE = 4;
   }
   ActionType type = 2;
   // Each step only has one action. ThrottleLevel and Reorient are complex actions requiring an extra attribute
-  // to be defined. NEXTSTAGE and COAST are simple actions so do not need specific arguments.
+  // to be defined. NEXTSTAGE, IGNITE, and COAST are simple actions so do not need specific arguments.
   oneof action {
     ThrottleLevel throttle = 3;
     Reorient position = 4;
