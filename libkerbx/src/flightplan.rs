@@ -7,7 +7,7 @@ use std::io::{BufReader, BufWriter};
 
 //TODO: Handling with proper custom Error type
 pub fn load_from_string(flightplan: &str) -> FlightPlan {
-    serde_json::from_str(flightplan.as_str()).expect("Error loading flight plan.")
+    serde_json::from_str(flightplan).expect("Error loading flight plan.")
 }
 
 //TODO: Handling with proper custom Error type
@@ -117,4 +117,14 @@ pub fn gen_pos_trigger(lat: f64, lon: f64) -> Trigger {
     trigger.set_position(position);
 
     trigger
+}
+
+pub fn gen_flightplan_from_steps(steps: Vec<Step>) -> FlightPlan {
+    let steps = RepeatedField::from_vec(steps);
+
+    let mut plan = FlightPlan::new();
+    plan.set_step_count(steps.len() as u32);
+    plan.set_steps(steps);
+
+    plan
 }
