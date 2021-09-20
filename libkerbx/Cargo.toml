@@ -10,11 +10,15 @@ edition = "2018"
 nalgebra = "0.28.*"
 krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
 contracts = "0.6.*"
-protobuf = "2.*"
-serde = "1.*"
+serde = {version="1.*"}
 serde_json = "1.*"
+protobuf = "2.*"
 
 [build-dependencies]
 glob = "*"
 protoc-rust = "2.*"
 krpc_mars_terraformer = { git = "https://github.com/drwhomphd/krpc-mars-terraformer.git", branch = "main" }
+
+[features]
+# Enables serde derive/seralize for protobuf
+with-serde = []
