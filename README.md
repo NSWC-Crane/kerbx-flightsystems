@@ -7,6 +7,8 @@ for embedded safety-critical systems.
 ## TODO
 1. Make sure errors are handled at the highest level and are not set to panic upon happening
 2. All Time calculations and associated protobuf definitions should be higher resolution
+3. Make sure avionics computer validates flight plan against current craft configuration
+4. Make sure avionics computer shuts off all network inputs when it enters ACKLAUNCH state 
 ## Workspace Elements
 
 ### Avionics Computer
