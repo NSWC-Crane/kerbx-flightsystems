@@ -11,10 +11,10 @@ use avionics::Avionics;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments.
-    let matches = App::new("KerbX Flight Planner")
+    let matches = App::new("KerbX Avionics Computer")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
-        .about("KerbX Flight Planning Mission Computer")
+        .about("Avionics Computer for KerbX Rocketry Systems")
         .arg(
             Arg::with_name("simip")
                 .short("i")
