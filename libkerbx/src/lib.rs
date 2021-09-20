@@ -1,5 +1,6 @@
 // KRPC Mars Generated Services
 pub mod drawing;
+pub mod flightplan;
 pub mod infernal_robotics;
 pub mod kerbal_alarm_clock;
 pub mod kerbx;
