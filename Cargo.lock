@@ -361,6 +361,8 @@ dependencies = [
  "nalgebra",
  "protobuf",
  "protoc-rust",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
