@@ -1,6 +1,7 @@
 //use glob;
 use krpc_mars_terraformer;
 use protoc_rust;
+use protoc_rust::Customize;
 
 fn main() {
     // Tell cargo to re-run this script only when json files in services/
@@ -23,6 +24,10 @@ fn main() {
         .out_dir("src/")
         .inputs(&["protos/kerbx.proto"])
         .include("protos")
+        .customize(Customize {
+            serde_derive: Some(true),
+            ..Default::default()
+        })
         .run()
-        .expect("RUnning protoc failed.");
+        .expect("Running protoc failed.");
 }
