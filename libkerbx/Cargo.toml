@@ -11,6 +11,8 @@ nalgebra = "0.28.*"
 krpc_mars = { git = "https://github.com/drwhomphd/krpc-mars.git"}
 contracts = "0.6.*"
 protobuf = "2.*"
+serde = "1.*"
+serde_json = "1.*"
 
 [build-dependencies]
 glob = "*"
