@@ -8,5 +8,5 @@ edition = "2018"
 [dependencies]
 serde = "1.*"
 serde_json = "1.*"
-libkerbx = { path = "../../libkerbx" }
+libkerbx = { path = "../../libkerbx", features = ["with-serde"] }
 clap = "2.33.*"
