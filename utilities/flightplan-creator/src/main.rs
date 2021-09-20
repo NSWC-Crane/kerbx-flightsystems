@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use libkerbx::{flightplan, kerbx::*};
+use libkerbx::{flightplan::*, kerbx::*};
 use serde::Serialize;
 use serde_json::{Result, Value};
 use std::fs::File;
@@ -32,8 +32,7 @@ fn main() {
         gen_time_trigger(0),
     ));
 
-    plan.set_steps(steps);
-    plan.set_step_count(steps.len() as u32);
+    let plan = gen_flightplan_from_steps(steps);
 
-    flightplan::write_to_file(matches.value_of("output-file").unwrap(), steps)
+    write_to_file(matches.value_of("output-file").unwrap(), &plan);
 }
