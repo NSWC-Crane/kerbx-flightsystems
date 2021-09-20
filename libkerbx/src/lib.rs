@@ -183,15 +183,31 @@ impl KerbxTransport {
         Ok(())
     }
 
-    pub fn engage_auto_pilot(&self) -> Result<(), Error> {
+    /// Turn on/off autopilot.
+    /// setting: if true, turns on autopilot; if false, turns off autopilot
+    pub fn set_auto_pilot(&self, setting: bool) -> Result<(), Error> {
         let autopilot = self.sim_feed.mk_call(&self.vessel_obj.get_auto_pilot())?;
-        self.sim_feed.mk_call(&autopilot.engage())?;
+        if setting {
+            self.sim_feed.mk_call(&autopilot.engage())?;
+        } else {
+            self.sim_feed.mk_call(&autopilot.disengage())?;
+        }
         Ok(())
     }
 
-    pub fn disengage_auto_pilo(&self) -> Result<(), Error> {
-        let autopilot = self.sim_feed.mk_call(&self.vessel_obj.get_auto_pilot())?;
-        self.sim_feed.mk_call(&autopilot.disengage())?;
+    /// Turn on/off sas on craft.
+    /// setting: if true, turns on sas; if false, turns off sas
+    pub fn set_sas(&self, setting: bool) -> Result<(), Error> {
+        let control = self.sim_feed.mk_call(&self.vessel_obj.get_control())?;
+        self.sim_feed.mk_call(&control.set_sas(setting))?;
+        Ok(())
+    }
+
+    /// Turn on/off rcs on craft.
+    /// /// setting: if true, turns on rcs; if false, turns off rcs
+    pub fn set_rcs(&self, setting: bool) -> Result<(), Error> {
+        let control = self.sim_feed.mk_call(&self.vessel_obj.get_control())?;
+        self.sim_feed.mk_call(&control.set_rcs(setting))?;
         Ok(())
     }
 
