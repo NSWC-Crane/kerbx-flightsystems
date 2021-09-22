@@ -74,6 +74,8 @@ message Reorient {
 message Step {
   uint32 count = 1;
 
+  // todo: Action should be split-out and put in its own message type similar to trigger. Will allow for cleaner
+  // more idiomatic match statements and potentially smaller protobuf message sizes.
   enum ActionType {
     // Engage the next stage
     NEXTSTAGE = 0;
