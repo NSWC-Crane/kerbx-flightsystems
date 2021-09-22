@@ -76,6 +76,41 @@ impl Avionics {
         true
     }
 
+    fn flightplan_exe_single_step(step: Step) {
+        match step.get_field_type() {
+            Step_ActionType::REORIENT => {
+                //todo
+            }
+            Step_ActionType::IGNITE => {
+                //todo
+            }
+            Step_ActionType::THROTTLELEVEL => {
+                //todo
+            }
+            Step_ActionType::COAST => {
+                //todo
+            }
+            Step_ActionType::NEXTSTAGE => {
+                //todo
+            }
+        }
+    }
+    fn flightplan_check_trigger(trigger: Trigger) -> bool {
+        match trigger.trigger_condition {
+            Trigger_oneof_trigger_condition::position(x) => {
+                //todo
+            }
+            Trigger_oneof_trigger_condition::time(x) => {
+                //todo
+            }
+            Trigger_oneof_trigger_condition::alt(x) => {
+                //todo
+            }
+        }
+
+        false
+    }
+
     pub fn set_error(&mut self, message: &str) {
         self.error_message = String::from(message);
     }
