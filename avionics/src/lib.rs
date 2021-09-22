@@ -1,6 +1,7 @@
 use contracts::*;
 use krpc_mars::protobuf::CodedOutputStream;
 use krpc_mars::RPCClient;
+use libkerbx::kerbx::Sheath_oneof_message::flightplan;
 use libkerbx::kerbx::*;
 use libkerbx::KerbxTransport;
 use std::net::TcpStream;
@@ -26,6 +27,7 @@ pub struct Avionics {
     error_message: String,
     flight_planner: TcpStream,
     sensors: KerbxTransport,
+    flightplan: Option<FlightPlan>,
 }
 
 impl Avionics {
@@ -41,7 +43,37 @@ impl Avionics {
             error_message: String::from(""),
             flight_planner: connection,
             sensors,
+            flightplan: None,
         })
+    }
+
+    /// Returns false if flightplan is invalide
+    //TODO: Add in a proper result type for the flight plan validator
+    #[requires(self.flightplan.is_some(), "Flightplan must exist to validate.")]
+    pub fn validate_flightplan(&self) -> bool {
+        // We shouldn't be calling this function if we have not already loaded the flight plan
+        let plan = self.flightplan.unwrap();
+
+        // Flight plan must have at least one step
+        if plan.step_count == 0 {
+            return false;
+        };
+
+        // First plan step should be an engine ignite, i.e., launch
+        if plan.steps[0].field_type != Step_ActionType::IGNITE {
+            return false;
+        };
+
+        for step in self.flightplan.unwrap().steps {
+            /*
+            TODO: Flight plan steps should be checked against craft composition to make sure that
+             each step can actually be executed by the constructed craft. For example, if an ignite
+             is called and the crafts current "stage" isn't an engine, this validation should fail
+             for safety reasons.
+             */
+        }
+
+        true
     }
 
     pub fn set_error(&mut self, message: &str) {
@@ -65,6 +97,7 @@ impl Avionics {
     }
 
     #[requires(self.state == AvionicsState::IDLE, "READY state only valid from IDLE")]
+    #[requires(self.flightplan.is_some(), "Vessel must have a valid flight plan")]
     pub fn to_ready(&mut self) {
         self.state = AvionicsState::READY;
     }
