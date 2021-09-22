@@ -9,8 +9,6 @@ use std::{error::Error, thread};
 
 use avionics::Avionics;
 
-static DEFAULT_FLIGHT_PLAN: &'static str = r#"{"step_count":1,"steps":[{"count":1,"field_type":"IGNITE","trigger":{"trigger_condition":{"time":{"seconds":0}}},"action":null}]}"#;
-
 fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments.
     let matches = App::new("KerbX Avionics Computer")
@@ -80,6 +78,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Here's where we block for receipt of the flight plan
     // TODO: Receive flight plan over the network and validate flight plan
+    status.load_flightplan();
 
     status.to_ready();
 
@@ -90,7 +89,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Area where we initiate launch //
     status.to_countdown();
 
-    for tick in 1..11 {
+    for tick in (1..11).rev() {
         println!("Launching in {} seconds...", tick);
 
         // TODO: This should be a spinlock waiting for abort commands from the flight planning system
@@ -118,6 +117,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         status.send_alive();
         status.send_telemetry();
+
+        // Todo: Implement check for transition to to_landed state -- could just cheat and use krpc
+
         thread::sleep(Duration::from_millis(100));
     }
 
