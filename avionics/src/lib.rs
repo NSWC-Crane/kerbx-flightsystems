@@ -9,14 +9,14 @@ use std::time::SystemTime;
 // Derive allows for boolean comparison of enums used in the contracts
 #[derive(Eq, PartialEq)]
 pub enum AvionicsState {
-    Off,
+    OFF,
     POST,
-    Idle,
-    Ready,
-    Countdown,
-    InFlight,
-    Landed,
-    Error,
+    IDLE,
+    READY,
+    COUNTDOWN,
+    INFLIGHT,
+    LANDED,
+    ERROR,
 }
 
 pub struct Avionics {
@@ -36,7 +36,7 @@ impl Avionics {
     ) -> Result<Avionics, std::io::Error> {
         let connection = TcpStream::connect(format!("{}:{}", ip, port))?;
         Ok(Avionics {
-            state: AvionicsState::Off,
+            state: AvionicsState::OFF,
             stage: 0,
             error_message: String::from(""),
             flight_planner: connection,
@@ -54,39 +54,39 @@ impl Avionics {
         self.stage += 1;
     }
 
-    #[requires(self.state == AvionicsState::Off, "POST state only valid from Off")]
+    #[requires(self.state == AvionicsState::OFF, "POST state only valid from OFF")]
     pub fn to_post(&mut self) {
         self.state = AvionicsState::POST;
     }
 
-    #[requires(self.state == AvionicsState::POST, "Idle state only valid from POST")]
+    #[requires(self.state == AvionicsState::POST, "IDLE state only valid from POST")]
     pub fn to_idle(&mut self) {
-        self.state = AvionicsState::Idle;
+        self.state = AvionicsState::IDLE;
     }
 
-    #[requires(self.state == AvionicsState::Idle, "Ready state only valid from Idle")]
+    #[requires(self.state == AvionicsState::IDLE, "READY state only valid from IDLE")]
     pub fn to_ready(&mut self) {
-        self.state = AvionicsState::Ready;
+        self.state = AvionicsState::READY;
     }
 
-    #[requires(self.state == AvionicsState::Ready, "Countdown state only valid from Ready")]
+    #[requires(self.state == AvionicsState::READY, "COUNTDOWN state only valid from READY")]
     pub fn to_countdown(&mut self) {
-        self.state = AvionicsState::Countdown;
+        self.state = AvionicsState::COUNTDOWN;
     }
 
-    #[requires(self.state == AvionicsState::Countdown, "InFlight state only valid from Countdown")]
+    #[requires(self.state == AvionicsState::COUNTDOWN, "InFlight state only valid from COUNTDOWN")]
     pub fn to_inflight(&mut self) {
-        self.state = AvionicsState::InFlight;
+        self.state = AvionicsState::INFLIGHT;
     }
 
-    #[requires(self.state == AvionicsState::InFlight, "Landed state only valid from InFlight")]
+    #[requires(self.state == AvionicsState::INFLIGHT, "Landed state only valid from INFLIGHT")]
     pub fn to_landed(&mut self) {
-        self.state = AvionicsState::Landed;
+        self.state = AvionicsState::LANDED;
     }
 
     // Error state is valid from all other states
     pub fn to_error(&mut self, message: &str) {
-        self.state = AvionicsState::Error;
+        self.state = AvionicsState::ERROR;
         self.error_message = String::from(message);
     }
 
@@ -105,6 +105,15 @@ impl Avionics {
         } else {
             eprintln!("Error writing message to flight planner.");
         }
+    }
+
+    // Set throttle to 100 percent and disable flight stabalizers in prep for autopilot
+    // TODO: Add error handling
+    #[requires(self.state == AvionicsState::READY, "Cannot prep for launch unless flight plan is valid")]
+    pub fn ready_for_launch(&mut self) {
+        self.sensors.set_sas(false);
+        self.sensors.set_rcs(false);
+        self.sensors.set_throttle(1.0);
     }
 
     pub fn send_telemetry(&mut self) {
