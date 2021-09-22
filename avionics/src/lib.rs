@@ -103,8 +103,8 @@ impl Avionics {
         true
     }
 
-    pub fn flightplan_pop_step(mut self) -> Option<Step> {
-        if let Some(mut plan) = self.flightplan {
+    pub fn flightplan_pop_step(&mut self) -> Option<Step> {
+        if let Some(mut plan) = self.flightplan.as_mut() {
             plan.steps.pop()
         } else {
             // todo: more robust/safe error handling
@@ -247,6 +247,10 @@ impl Avionics {
     pub fn to_error(&mut self, message: &str) {
         self.state = AvionicsState::ERROR;
         self.error_message = String::from(message);
+    }
+
+    pub fn get_state(&self) -> &AvionicsState {
+        &self.state
     }
 
     pub fn send_alive(&mut self) {
