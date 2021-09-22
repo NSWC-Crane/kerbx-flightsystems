@@ -176,6 +176,13 @@ impl KerbxTransport {
         Ok(())
     }
 
+    /// Returns the current stage of the craft as reflected by the in-game UI
+    pub fn get_stage(&self) -> Result<i32, Error> {
+        let control = self.sim_feed.mk_call(&self.vessel_obj.get_control())?;
+        let stage = self.sim_feed.mk_call(&control.get_current_stage())?;
+        Ok(stage)
+    }
+
     /// percent must be a value between 0 and 1.
     #[requires(percent >= 0.0 && percent <= 1.0, "Throttle percent only valid between 0 and 1.")]
     pub fn set_throttle(&self, percent: f32) -> Result<(), Error> {
