@@ -207,7 +207,7 @@ impl KerbxTransport {
     /// stabilizes flight.
     /// pitch: Wanted pitch
     /// heading: Wanted heading
-    pub fn set_auto_pilot_direction(&self, pitch: f32, heading: f32) -> Result<(), Errozsr> {
+    pub fn set_auto_pilot_direction(&self, pitch: f32, heading: f32) -> Result<(), Error> {
         let autopilot = self.sim_feed.mk_call(&self.vessel_obj.get_auto_pilot())?;
         self.sim_feed
             .mk_call(&autopilot.target_pitch_and_heading(pitch, heading))?;
