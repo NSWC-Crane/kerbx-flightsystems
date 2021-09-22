@@ -61,26 +61,42 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ship = KerbxTransport::new(client)?;
 
     // Area where we perform the Power-On-Self-Test Routine Operations //
-
-    // Now Entering POST
-    status.to_post();
-
-    //***********************************************************************//
-
-    // Area where we perform initial load of the flight plan from the flight planning computer //
-
-    // Connect to flight planning server and send ALIVE
+    // "Boot UP" our flight computer
     let mut status = Avionics::new(
         String::from(matches.value_of("plannerip").unwrap()),
         String::from(matches.value_of("plannerport").unwrap()),
         ship,
     )?;
+    // Now Entering POST
+    status.to_post();
+
+    // TODO: Check for POST failure and set ERROR message.
+
+    //***********************************************************************//
+    // Area where we perform initial load of the flight plan from the flight planning computer //
     status.send_alive();
     // Now wait for flight plan...
     status.to_idle();
+
+    // Here's where we block for receipt of the flight plan
+    // TODO: Receive flight plan over the network and validate flight plan
+
+    status.to_ready();
+
+    // Prepare craft for launch
+    status.ready_for_launch();
     //**********************************************************************//
 
     // Area where we initiate launch //
+    status.to_countdown();
+
+    for tick in 1..11 {
+        println!("Launching in {} seconds...", tick);
+
+        // TODO: This should be a spinlock waiting for abort commands from the flight planning system
+        // TODO: Check craft for errors...
+        thread::sleep(Duration::from_secs(1));
+    }
 
     //*********************************************************************//
 
