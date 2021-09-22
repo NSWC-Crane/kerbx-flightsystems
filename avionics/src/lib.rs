@@ -92,6 +92,8 @@ impl Avionics {
              each step can actually be executed by the constructed craft. For example, if an ignite
              is called and the crafts current "stage" isn't an engine, this validation should fail
              for safety reasons.
+
+             todo: Validate IGNITE action Type corresponds to a stage with an engine
              */
             if step.trigger.is_none() {
                 eprintln!("Every step must have a trigger. Use a Time of 0 if you have no valid condition.");
@@ -102,21 +104,32 @@ impl Avionics {
         true
     }
 
-    pub fn flightplan_exe_single_action(&self, step: Step) {
-        match step.get_field_type() {
+    /// Executes a single step in the flight plan
+    pub fn flightplan_exe_single_action(&self, step: &Step) {
+        match &step.get_field_type() {
             Step_ActionType::REORIENT => {
-                //todo
+                let pitch = step.get_position().get_pitch();
+                let heading = step.get_position().get_yaw();
+
+                self.sensors.set_auto_pilot(true);
+                self.sensors.set_auto_pilot_direction(pitch, heading);
             }
             Step_ActionType::IGNITE => {
-                //todo
+                // TODO: See validation of making sure the IGNITE type corresponds to an engine
+                self.sensors.trigger_stage();
             }
             Step_ActionType::THROTTLELEVEL => {
-                //todo
+                // Double call to get_throttle is a byproduct of a throttle action type also containing
+                // a field of the same name. Mea culpa.
+                self.sensors
+                    .set_throttle(step.get_throttle().get_throttle());
             }
             Step_ActionType::COAST => {
+                self.sensors.set_auto_pilot(false);
                 //todo
             }
             Step_ActionType::NEXTSTAGE => {
+                self.sensors.trigger_stage();
                 //todo
             }
         }
