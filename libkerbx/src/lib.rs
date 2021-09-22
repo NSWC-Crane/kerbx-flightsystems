@@ -203,6 +203,17 @@ impl KerbxTransport {
         Ok(())
     }
 
+    /// Sets the direction the auto pilot should attempt to fly in -- autopilot automatically
+    /// stabilizes flight.
+    /// pitch: Wanted pitch
+    /// heading: Wanted heading
+    pub fn set_auto_pilot_direction(&self, pitch: f32, heading: f32) -> Result<(), Errozsr> {
+        let autopilot = self.sim_feed.mk_call(&self.vessel_obj.get_auto_pilot())?;
+        self.sim_feed
+            .mk_call(&autopilot.target_pitch_and_heading(pitch, heading))?;
+        Ok(())
+    }
+
     /// Turn on/off sas on craft.
     /// setting: if true, turns on sas; if false, turns off sas
     pub fn set_sas(&self, setting: bool) -> Result<(), Error> {
