@@ -1,10 +1,12 @@
 use contracts::*;
+use krpc_mars::protobuf::reflect::ProtobufValue;
 use krpc_mars::protobuf::CodedOutputStream;
 use krpc_mars::RPCClient;
 use libkerbx::kerbx::Sheath_oneof_message::flightplan;
 use libkerbx::kerbx::*;
 use libkerbx::KerbxTransport;
 use std::net::TcpStream;
+use std::thread::current;
 use std::time::SystemTime;
 
 // Derive allows for boolean comparison of enums used in the contracts
@@ -52,31 +54,55 @@ impl Avionics {
     #[requires(self.flightplan.is_some(), "Flightplan must exist to validate.")]
     pub fn validate_flightplan(&self) -> bool {
         // We shouldn't be calling this function if we have not already loaded the flight plan
-        let plan = self.flightplan.unwrap();
+        let plan: &FlightPlan = self.flightplan.as_ref().unwrap();
 
         // Flight plan must have at least one step
         if plan.step_count == 0 {
+            eprintln!("Flight plan does not have at least one step.");
             return false;
         };
 
         // First plan step should be an engine ignite, i.e., launch
         if plan.steps[0].field_type != Step_ActionType::IGNITE {
+            eprintln!("Flight plan does not begin with an IGNITE action.");
             return false;
         };
 
-        for step in self.flightplan.unwrap().steps {
+        // First trigger should be a Time trigger with 0 as the trigger time.
+        if plan.steps[0].trigger.is_some() {
+            if plan.steps[0].trigger.as_ref().unwrap().has_time() {
+                if plan.steps[0].trigger.as_ref().unwrap().get_time().seconds != 0 {
+                    eprintln!("First step must trigger on Time 0.");
+                    return false;
+                }
+            } else {
+                eprintln!("First step must use a Time trigger.");
+                return false;
+            }
+        } else {
+            eprintln!(
+                "All steps must have triggers. Use a time of 0 if you have no valid condition.."
+            );
+            return false;
+        }
+
+        for step in self.flightplan.as_ref().unwrap().steps.as_ref() {
             /*
             TODO: Flight plan steps should be checked against craft composition to make sure that
              each step can actually be executed by the constructed craft. For example, if an ignite
              is called and the crafts current "stage" isn't an engine, this validation should fail
              for safety reasons.
              */
+            if step.trigger.is_none() {
+                eprintln!("Every step must have a trigger. Use a Time of 0 if you have no valid condition.");
+                return false;
+            }
         }
 
         true
     }
 
-    fn flightplan_exe_single_step(step: Step) {
+    pub fn flightplan_exe_single_action(&self, step: Step) {
         match step.get_field_type() {
             Step_ActionType::REORIENT => {
                 //todo
@@ -95,17 +121,61 @@ impl Avionics {
             }
         }
     }
-    fn flightplan_check_trigger(trigger: Trigger) -> bool {
-        match trigger.trigger_condition {
-            Trigger_oneof_trigger_condition::position(x) => {
-                //todo
+
+    /// Checks the trigger of a flight plan action returning true if the trigger is met.
+    pub fn flightplan_check_trigger(&self, trigger: &Trigger) -> bool {
+        if let Some(type_of_trigger) = &trigger.trigger_condition {
+            match type_of_trigger {
+                Trigger_oneof_trigger_condition::position(x) => {
+                    //todo: Implement such that there is some room for error in the lat/lon checking in a way that makes sense
+                    let current_lat = self.sensors.get_lat().expect("Error getting latitude.");
+                    let min_lat = trigger.get_position().get_lat() - 10.0;
+                    let max_lat = trigger.get_position().get_lat() + 10.0;
+
+                    let current_lon = self.sensors.get_lon().expect("Error getting longitude.");
+                    let min_lon = trigger.get_position().get_lon() - 10.0;
+                    let max_lon = trigger.get_position().get_lon() + 10.0;
+
+                    // If current_lat is within the latitude range, then we check the current lon.
+                    // We'll return only true if both are within range.
+                    return if min_lat <= current_lat && current_lat <= max_lat {
+                        if min_lon <= current_lon && current_lon <= max_lon {
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    };
+                }
+                Trigger_oneof_trigger_condition::time(x) => {
+                    let current_time = libkerbx::time().unwrap().seconds;
+
+                    return if trigger.get_time().seconds < current_time {
+                        true
+                    } else {
+                        false
+                    };
+                }
+                Trigger_oneof_trigger_condition::alt(x) => {
+                    //todo: Error handling
+                    let current_alt = self.sensors.get_alt().expect("Error getting altitude.");
+
+                    //todo: fix altitude checking such that the error is a function of the velocity/acceleration of the craft otherwise it's possible for the craft to be going so fast it misses its window
+                    let minimum_alt = trigger.get_alt() - 10.0;
+                    let maximum_alt = trigger.get_alt() + 10.0;
+
+                    return if minimum_alt <= current_alt && current_alt <= maximum_alt {
+                        true
+                    } else {
+                        false
+                    };
+                }
             }
-            Trigger_oneof_trigger_condition::time(x) => {
-                //todo
-            }
-            Trigger_oneof_trigger_condition::alt(x) => {
-                //todo
-            }
+        } else {
+            //todo: In the real world we shouldn't panic here and instead fail gracefully as I don't
+            // believe this state is reachable.
+            panic!("Trigger without condition type! This should be impossible.")
         }
 
         false
