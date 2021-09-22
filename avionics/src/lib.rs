@@ -24,9 +24,8 @@ pub enum AvionicsState {
 
 pub struct Avionics {
     state: AvionicsState,
-    stage: u8,
-    /// Last error message set
-    error_message: String,
+    current_step: u32,     // Current step of the flight plan
+    error_message: String, // Last error message set
     flight_planner: TcpStream,
     sensors: KerbxTransport,
     flightplan: Option<FlightPlan>,
@@ -41,7 +40,7 @@ impl Avionics {
         let connection = TcpStream::connect(format!("{}:{}", ip, port))?;
         Ok(Avionics {
             state: AvionicsState::OFF,
-            stage: 0,
+            current_step: 0,
             error_message: String::from(""),
             flight_planner: connection,
             sensors,
@@ -102,6 +101,16 @@ impl Avionics {
         }
 
         true
+    }
+
+    pub fn flightplan_pop_step(mut self) -> Option<Step> {
+        if let Some(mut plan) = self.flightplan {
+            plan.steps.pop()
+        } else {
+            // todo: more robust/safe error handling
+            panic!("Popping an empty flight plan.");
+            None
+        }
     }
 
     /// Executes a single step in the flight plan
@@ -199,9 +208,8 @@ impl Avionics {
     }
 
     // Flight plans should not have 255 stages or more
-    #[invariant(self.stage < 255, "Stage count (u8) must not integer overflow")]
     pub fn inc_stage(&mut self) {
-        self.stage += 1;
+        self.current_step += 1;
     }
 
     #[requires(self.state == AvionicsState::OFF, "POST state only valid from OFF")]
