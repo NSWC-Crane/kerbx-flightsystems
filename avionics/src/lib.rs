@@ -48,6 +48,13 @@ impl Avionics {
         })
     }
 
+    pub fn load_flightplan(&mut self) {
+        // todo: Replace with networking code that receives flight plan from flight planner
+        self.flightplan = Some(libkerbx::flightplan::load_from_string(
+            r#"{"step_count":1,"steps":[{"count":1,"field_type":"IGNITE","trigger":{"trigger_condition":{"time":{"seconds":0}}},"action":null}]}"#,
+        ))
+    }
+
     /// Returns false if flightplan is invalide
     //TODO: Add in a proper result type for the flight plan validator
     #[requires(self.flightplan.is_some(), "Flightplan must exist to validate.")]
