@@ -78,13 +78,12 @@ message Step {
   // more idiomatic match statements and potentially smaller protobuf message sizes.
   enum ActionType {
     // Engage the next stage
-    NEXTSTAGE = 0;
-    THROTTLELEVEL = 1;
-    // Do nothing
-    COAST = 2;
-    REORIENT = 3;
+    NEXTSTAGE = 0; // Executes next stage
+    THROTTLELEVEL = 1; // Adjusts throttle level
+    COAST = 2; // Turns off autopilot and does nothing
+    REORIENT = 3; // Enables autopilot and reorients aircraft
     // Make sure IGNITE is explicit for safety
-    IGNITE = 4;
+    IGNITE = 4; // Executes next stage but makes sure it's an engine...
   }
   ActionType type = 2;
   // Each step only has one action. ThrottleLevel and Reorient are complex actions requiring an extra attribute
