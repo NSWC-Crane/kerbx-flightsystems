@@ -98,10 +98,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         thread::sleep(Duration::from_secs(1));
     }
 
+    // Execute the first step!
+    let first = status.flightplan_pop_step().expect("First step empty.");
+    status.flightplan_exe_single_action(&first);
     //*********************************************************************//
+    // todo: Improve robustness of flight control loop
+    while status.get_state() != &AvionicsState::LANDED {
+        while let Some(step) = status.flightplan_pop_step() {
+            // Keep looking until our Trigger is met and we execute our step
+            let trigger = step.trigger.get_ref();
+            loop {
+                if status.flightplan_check_trigger(trigger) {
+                    status.flightplan_exe_single_action(&step);
+                }
+            }
+        }
 
-    // Flight control loop
-    loop {
+        // We're out of flight planning steps but keep sending our watchdogs and telemetry
+
         status.send_alive();
         status.send_telemetry();
         thread::sleep(Duration::from_millis(100));
