@@ -13,6 +13,7 @@ message Time {
 
 message WatchDog {
   Time time = 1;
+  // todo: Fix Status enum to be better suited for sending avionics state to flight planner regularly
   enum Status {
     ASKALIVE = 0;
     ACKALIVE = 1;
