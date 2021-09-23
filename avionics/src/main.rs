@@ -9,6 +9,8 @@ use std::{error::Error, thread};
 
 use avionics::Avionics;
 
+const FIVEHUNDREDHZ_IN_MS: u64 = 2;
+
 fn main() -> Result<(), Box<dyn Error>> {
     // Parse command line arguments.
     let matches = App::new("KerbX Avionics Computer")
@@ -110,17 +112,21 @@ fn main() -> Result<(), Box<dyn Error>> {
                 if status.flightplan_check_trigger(trigger) {
                     status.flightplan_exe_single_action(&step);
                 }
+                //
+                status.send_alive();
+                status.send_telemetry();
+                // Effectively this is sending the environment at 500hz
+                thread::sleep(Duration::from_millis(FIVEHUNDREDHZ_IN_MS));
             }
         }
 
         // We're out of flight planning steps but keep sending our watchdogs and telemetry
-
         status.send_alive();
         status.send_telemetry();
 
         // Todo: Implement check for transition to to_landed state -- could just cheat and use krpc
 
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(FIVEHUNDREDHZ_IN_MS));
     }
 
     Ok(())
