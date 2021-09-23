@@ -215,7 +215,7 @@ impl Avionics {
     }
 
     // Flight plans should not have 255 stages or more
-    pub fn inc_stage(&mut self) {
+    pub fn inc_step(&mut self) {
         self.current_step += 1;
     }
 

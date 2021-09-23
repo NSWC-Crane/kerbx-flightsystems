@@ -111,6 +111,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             loop {
                 if status.flightplan_check_trigger(trigger) {
                     status.flightplan_exe_single_action(&step);
+                    status.inc_step();
                 }
                 //
                 status.send_alive();
