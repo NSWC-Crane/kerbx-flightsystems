@@ -44,7 +44,7 @@ message Telemetry {
   // a.k.a. heading
   double yaw = 7;
   double velocity = 8;
-  uint32 mission_plan_step = 9;
+  uint32 flight_plan_step = 9;
 }
 
 message Position {

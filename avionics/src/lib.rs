@@ -297,7 +297,7 @@ impl Avionics {
         message.set_yaw(self.sensors.get_heading().expect("Error getting heading."));
         message.set_pitch(self.sensors.get_pitch().expect("Error getting pitch."));
         message.set_roll(self.sensors.get_roll().expect("Error getting roll."));
-        message.set_mission_plan_step(self.current_step);
+        message.set_flight_plan_step(self.current_step);
         message.set_velocity(
             self.sensors
                 .get_velocity()
