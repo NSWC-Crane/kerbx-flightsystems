@@ -110,6 +110,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let trigger = step.trigger.get_ref();
             loop {
                 if status.flightplan_check_trigger(trigger) {
+                    // todo: add verification that the step count is always accurately tracking the number of steps executed.
                     status.flightplan_exe_single_action(&step);
                     status.inc_step();
                 }
